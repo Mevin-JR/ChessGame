@@ -1,35 +1,38 @@
 import pygame
 import os
+from typing import Tuple
 
 # Chess board notations
-# [['a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'], 
+# ['a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'], 
 # ['a7', 'b7', 'c7', 'd7', 'e7', 'f7', 'g7', 'h7'], 
 # ['a6', 'b6', 'c6', 'd6', 'e6', 'f6', 'g6', 'h6'], 
 # ['a5', 'b5', 'c5', 'd5', 'e5', 'f5', 'g5', 'h5'], 
 # ['a4', 'b4', 'c4', 'd4', 'e4', 'f4', 'g4', 'h4'], 
 # ['a3', 'b3', 'c3', 'd3', 'e3', 'f3', 'g3', 'h3'], 
 # ['a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2'], 
-# ['a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1']]
+# ['a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1']
 
 # Initialize var
 piece_dir = "./assets/chess_pieces"
 files = os.listdir(piece_dir)
 square_rects = {} # Global rects dictionaty
+chess_pieces = {}
+all_pieces = pygame.sprite.Group()
+black = pygame.sprite.Group()
+white = pygame.sprite.Group()
 
 pieces_init_pos_black = {
-    "b_rook1": "a8", "b_knight1": "b8", "b_bishop1": "c8", "b_queen": "d8", "b_king": "e8", "b_bishop2": "f8", "b_knight2": "g8", "b_rook2": "h8",
+    "b_rook1": "a8", "b_knight1": "b8", "b_bishop1": "c8", "b_queen0": "d8", "b_king0": "e8", "b_bishop2": "f8", "b_knight2": "g8", "b_rook2": "h8",
     "b_pawn1": "a7", "b_pawn2": "b7", "b_pawn3": "c7", "b_pawn4": "d7", "b_pawn5": "e7", "b_pawn6": "f7", "b_pawn7": "g7", "b_pawn8": "h7",
 }
 
 pieces_init_pos_white = {
     "w_pawn1": "a2", "w_pawn2": "b2", "w_pawn3": "c2", "w_pawn4": "d2", "w_pawn5": "e2", "w_pawn6": "f2", "w_pawn7": "g2", "w_pawn8": "h2",
-    "w_rook1": "a1", "w_knight1": "b1", "w_bishop1": "c1", "w_queen": "d1", "w_king": "e1", "w_bishop2": "f1", "w_knight2": "g1", "w_rook2": "h1",
+    "w_rook1": "a1", "w_knight1": "b1", "w_bishop1": "c1", "w_queen0": "d1", "w_king0": "e1", "w_bishop2": "f1", "w_knight2": "g1", "w_rook2": "h1",
 }
 
 # Chess board UI
-def chess_board(font: pygame.font.Font, offset_x: int, offset_y: int):
-
-    # Init variables
+def chess_board(font: pygame.font.Font, offset_x: int, offset_y: int) -> Tuple[pygame.Surface, dict]:
     sq_dark = (184,139,74)
     sq_light = (227,193,111)
     square_size = 80
@@ -116,27 +119,27 @@ def get_square_center(square: str) -> tuple:
         return rect.center
     return None
 
-def initialize_pieces() -> pygame.sprite.Group: 
-    # Black Pieces
-    black_pieces_raw = get_black_pieces()
+def initialize_pieces() -> Tuple[pygame.sprite.Group, pygame.sprite.Group, pygame.sprite.Group]:
     black_pieces = []
+    black_pieces_raw = get_black_pieces()
+    white_pieces = []
+    white_pieces_raw = get_white_pieces()
+    chess_pieces.clear()
+
+    # Black Pieces
     for piece, square in pieces_init_pos_black.items():
-        black_pieces.append(Pieces(black_pieces_raw.get(piece[:-1]) if piece[-1].isdigit() else black_pieces_raw.get(piece), get_square_center(square)))
-    black = pygame.sprite.Group()
+        piece_obj = Pieces(black_pieces_raw.get(piece[:-1]), get_square_center(square))
+        black_pieces.append(piece_obj)
+        chess_pieces[piece] = piece_obj
+    all_pieces.add(piece for piece in black_pieces)
     black.add(piece for piece in black_pieces)
 
     # White Pieces
-    white_pieces_raw = get_white_pieces()
-    white_pieces = []
     for piece, square in pieces_init_pos_white.items():
-        white_pieces.append(Pieces(white_pieces_raw.get(piece[:-1]) if piece[-1].isdigit() else white_pieces_raw.get(piece), get_square_center(square)))
-    white = pygame.sprite.Group()
+        piece_obj = Pieces(white_pieces_raw.get(piece[:-1]), get_square_center(square))
+        white_pieces.append(piece_obj)
+        chess_pieces[piece] = piece_obj
+    all_pieces.add(piece for piece in white_pieces)
     white.add(piece for piece in white_pieces)
 
-    return black, white
-
-def get_clicked_square(mouse_pos: tuple) -> str:
-    for square_coords, square_rect in square_rects.items():
-        if square_rect.collidepoint(mouse_pos):
-            return square_coords
-    return None
+    return black, white, all_pieces
