@@ -1,4 +1,6 @@
 import pygame
+import os
+
 import UI
 import logic
 
@@ -7,13 +9,14 @@ pygame.init()
 screenInfo = pygame.display.Info()
 
 FONT32 = pygame.font.Font(None, 32)
+
 WIDTH, HEIGHT = screenInfo.current_w - 100, screenInfo.current_h - 100
 FPS = 60
 
 # Window customizations
 WINDOW = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
 pygame.display.set_caption("Chess Game")
-pygame.display.set_icon(pygame.image.load("./assets/chess-icon.png"))
+pygame.display.set_icon(pygame.image.load(os.path.join("assets", "chess-icon.png")))
 
 # Initialize chess board & pieces
 board_offset_x, board_offset_y = 100, 50

@@ -1,5 +1,11 @@
 import pygame
+import os
+
 import UI
+
+pygame.mixer.init()
+PIECE_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_move.wav"))
+PIECE_CAPTURE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_capture.wav"))
 
 chess_pieces = UI.chess_pieces
 square_rects = UI.square_rects
@@ -105,6 +111,7 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> None:
 
     if not isOccupied and piece_can_move(current_piece, move_to_square_center):
         rect.center = move_to_square_center
+        PIECE_MOVE_SOUND.play()
         print("Moved: %s -> %s" % (current_piece, get_square(rect.center))) # DEBUG
     elif not piece_can_move(current_piece, move_to_square_center):
         return
@@ -112,4 +119,5 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> None:
         if not own_piece(current_piece, occupied_piece):
             remove_piece(occupied_piece)
             rect.center = move_to_square_center
+            PIECE_CAPTURE_SOUND.play()
             print("Moved: %s -> %s" % (current_piece, move_to_square)) # DEBUG

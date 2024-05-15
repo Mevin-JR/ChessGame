@@ -13,8 +13,7 @@ from typing import Tuple
 # ['a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1']
 
 # Initialize var
-piece_dir = "./assets/chess_pieces"
-files = os.listdir(piece_dir)
+files = os.listdir(os.path.join("assets", "chess_pieces"))
 square_rects = {} # Global rects dictionaty
 chess_pieces = {}
 all_pieces = pygame.sprite.Group()
@@ -90,21 +89,19 @@ def add_notations(board_surface: pygame.Surface, font: pygame.font.Font) -> None
 
 # Chess pieces
 def get_black_pieces() -> dict:
-    black_pieces_png = [piece_dir + "/" + png for png in files if "b_" in png]
     black_pieces = {}
+    black_pieces_png = [png for png in files if "b_" in png]
     for piece in black_pieces_png:
-        piece_name = os.path.basename(piece)
-        piece_name_formatted = piece_name[:-4]
-        black_pieces[piece_name_formatted] = pygame.image.load(str(piece)).convert_alpha()
+        piece_name = piece[:-4]
+        black_pieces[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
     return black_pieces
 
 def get_white_pieces() -> dict:
-    white_pieces_png = [piece_dir + "/" + png for png in files if "w_" in png]
     white_pieces = {}
+    white_pieces_png = [png for png in files if "w_" in png]
     for piece in white_pieces_png:
-        piece_name = os.path.basename(piece)
-        piece_name_formatted = piece_name[:-4]
-        white_pieces[piece_name_formatted] = pygame.image.load(str(piece)).convert_alpha()
+        piece_name = piece[:-4]
+        white_pieces[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
     return white_pieces
 
 class Pieces(pygame.sprite.Sprite):
