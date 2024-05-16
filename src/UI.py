@@ -1,6 +1,5 @@
 import pygame
 import os
-from typing import Tuple
 
 # Chess board notations
 # ['a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'], 
@@ -14,8 +13,15 @@ from typing import Tuple
 
 # Initialize var
 files = os.listdir(os.path.join("assets", "chess_pieces"))
+
+square_size = 80
+board_surface = pygame.Surface((8 * square_size + 50, 8 * square_size + 50))
+sq_dark = (184,139,74)
+sq_light = (227,193,111)
+
 square_rects = {} # Global rects dictionaty
 chess_pieces = {}
+
 all_pieces = pygame.sprite.Group()
 black = pygame.sprite.Group()
 white = pygame.sprite.Group()
@@ -31,14 +37,10 @@ pieces_init_pos_white = {
 }
 
 # Chess board UI
-def chess_board(font: pygame.font.Font, offset_x: int, offset_y: int) -> Tuple[pygame.Surface, dict]:
-    sq_dark = (184,139,74)
-    sq_light = (227,193,111)
-    square_size = 80
+def chess_board(font: pygame.font.Font, offset_x: int, offset_y: int) -> tuple[pygame.Surface, dict]:
     square_rects.clear()
 
     # Surface
-    board_surface = pygame.Surface((8 * square_size + 50, 8 * square_size + 50))
     board_surface.fill((50, 50, 50))
 
     for row in range(8):
@@ -87,6 +89,12 @@ def add_notations(board_surface: pygame.Surface, font: pygame.font.Font) -> None
                 alph_count += 1
                 x_left_init = 80 + (col + 1) * square_size
 
+def get_square_center(square: str) -> tuple:
+    rect: pygame.Rect = square_rects.get(square, None)
+    if rect is not None:
+        return rect.center
+    return None
+
 # Chess pieces
 def get_black_pieces() -> dict:
     black_pieces = {}
@@ -109,14 +117,11 @@ class Pieces(pygame.sprite.Sprite):
         super().__init__()
         self.image = image
         self.rect = self.image.get_rect(center=pos)
+    
+    def get_rect(self) -> pygame.Rect:
+        return self.rect
 
-def get_square_center(square: str) -> tuple:
-    rect: pygame.Rect = square_rects.get(square, None)
-    if rect is not None:
-        return rect.center
-    return None
-
-def initialize_pieces() -> Tuple[pygame.sprite.Group, pygame.sprite.Group, pygame.sprite.Group]:
+def initialize_pieces() -> tuple[pygame.sprite.Group, pygame.sprite.Group, pygame.sprite.Group]:
     black_pieces = []
     black_pieces_raw = get_black_pieces()
     white_pieces = []
