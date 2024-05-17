@@ -23,6 +23,16 @@ chess_board, square_rects = UI.chess_board(FONT32, BOARD_OFFSET_X, BOARD_OFFSET_
 black, white, all_pieces = UI.initialize_pieces()
 
 selected_piece: UI.Pieces = None
+selected_piece_name: str = None
+
+def show_allowed_moves(surface: pygame.Surface, piece_name: str):
+    move_highlight_color = (90, 90, 90)
+
+    moves_dict = logic.get_allowed_moves(piece_name)
+    values = [value for value in moves_dict.values() if value is not None]
+    for items in values:
+        for square in items:
+            pygame.draw.circle(surface, move_highlight_color, square.center, 10)
 
 def select_piece() -> None:
     if selected_piece is not None:
@@ -34,6 +44,7 @@ def select_piece() -> None:
         overlay_surface.fill(overlay_color)
         overlay_surface.set_alpha(70)
 
+        show_allowed_moves(WINDOW, selected_piece_name)
         WINDOW.blit(overlay_surface, square_rect.topleft)
 
 def add_graphics() -> None:
@@ -46,12 +57,9 @@ def add_graphics() -> None:
     all_pieces.draw(WINDOW)
 
     pygame.display.update()
-    # for square_rect in square_rects.values():
-    #     border_rect = square_rect.inflate(2, 2)
-    #     pygame.draw.rect(WINDOW, (255, 255, 255), border_rect, 1)
 
 def main():
-    global selected_piece
+    global selected_piece, selected_piece_name
 
     clock = pygame.time.Clock()
     clicked = False
@@ -69,6 +77,7 @@ def main():
                     if logic.own_piece(piece_name, logic.get_piece(mouse_pos)[1]):
                         selected, piece_name = logic.get_piece(mouse_pos)
                         selected_piece = UI.chess_pieces.get(piece_name)
+                        selected_piece_name = piece_name
                     else:
                         logic.move_piece(piece_name, mouse_pos)
                         selected = False
@@ -76,6 +85,7 @@ def main():
                 else:
                     selected, piece_name = logic.get_piece(mouse_pos)
                     selected_piece = UI.chess_pieces.get(piece_name)
+                    selected_piece_name = piece_name
             if event.type == pygame.MOUSEBUTTONUP and clicked == True:
                 clicked = False
                 print("Clicked: ", logic.get_square(mouse_pos)[0]) # DEBUG
