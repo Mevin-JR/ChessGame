@@ -25,11 +25,12 @@ black, white, all_pieces = UI.initialize_pieces()
 selected_piece: UI.Pieces = None
 selected_piece_name: str = None
 
-def show_allowed_moves(surface: pygame.Surface, piece_name: str):
+def show_allowed_moves(surface: pygame.Surface, piece_name: str) -> None:
     move_highlight_color = (90, 90, 90)
-
     moves_dict = logic.get_allowed_moves(piece_name)
     values = [value for value in moves_dict.values() if value is not None]
+    if len(values) == 0:
+        return
     for items in values:
         for square in items:
             pygame.draw.circle(surface, move_highlight_color, square.center, 10)

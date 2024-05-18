@@ -32,6 +32,13 @@ def get_square(arg):
     else:
         raise ValueError("Argument must be a tuple or a string")
 
+def square_contains_piece(square: str) -> bool:
+    square_rect = get_square(square)
+    for piece in chess_pieces.values():
+        if piece.rect.collidepoint(square_rect.center):
+            return True
+    return False
+
 def get_piece(mouse_pos: tuple):
     for piece_name, piece in chess_pieces.items():
         if piece.rect.collidepoint(mouse_pos):
@@ -46,6 +53,12 @@ def remove_piece(piece_name: str):
     all_pieces.remove(chess_pieces.get(piece_name))
     print("Removed: ", chess_pieces.get(piece_name)) # DEBUG
     del chess_pieces[piece_name]    
+
+def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple):
+    remove_piece(target)
+    piece_rect.center = target_square
+    PIECE_CAPTURE_SOUND.play()
+
 
 def own_piece(piece_name: str, target_name: str) -> bool:
     if target_name is None:
@@ -73,10 +86,11 @@ def is_obstructed(start: str, dest: str) -> bool:
             obstructed = False
             run = True
             while run:
-                if square_num == int(dest[1]):
+                if square_num > int(dest[1]) or square_num < int(dest[1]):
                     run = False
                     break
                 square = f"{start[0]}{square_num}"
+                print("Check: ", square)
                 for piece in chess_pieces.values():
                     if piece.rect.collidepoint(UI.get_square_center(square)):
                         run = False
@@ -89,7 +103,7 @@ def is_obstructed(start: str, dest: str) -> bool:
             square_alph = ord(start[0]) + left_right_diff
             obstructed = False
             run = True
-            while run:
+            while run or obstructed is True:
                 if chr(square_alph) == dest[0]:
                     run = False
                     break
@@ -100,6 +114,7 @@ def is_obstructed(start: str, dest: str) -> bool:
                         obstructed = True
                 square_alph += left_right_diff
             return obstructed
+        # TODO: Complete diagonal path check
 
 def piece_can_move(piece_name_raw: str, dest: tuple) -> bool:
     current_square = get_square(chess_pieces.get(piece_name_raw).rect.center)[0]
@@ -112,20 +127,41 @@ def piece_can_move(piece_name_raw: str, dest: tuple) -> bool:
     piece = piece_name_raw[2:-1]
     match piece:
         case "pawn":
+            if is_obstructed(current_square, dest_square):
+                return False
             init_pos: dict = UI.pieces_init_pos_black if not is_white(piece_name_raw) else UI.pieces_init_pos_white
             has_moved = True if get_square(piece_rect.center)[0] != init_pos.get(piece_name_raw) else False
             if has_moved:
-                if current_square[0] == dest_square[0] and not is_obstructed(current_square, dest_square): # Only vertical movement
+                if current_square[0] == dest_square[0]: # Only vertical movement
                     if is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) + 1: # Prevent moving back (white)
                         return True
                     if not is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) - 1: # Prevent moving back (black)
                         return True
+                elif path_diagonal(current_square, dest_square):
+                    if is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) + 1:
+                        return square_contains_piece(dest_square)
+                    if not is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) - 1:
+                        return square_contains_piece(dest_square)
             else:
-                if current_square[0] == dest_square[0] and not is_obstructed(current_square, dest_square):
-                    if is_white(piece_name_raw) and int(dest_square[1]) <= int(current_square[1]) + 2: # 2 square movement (white)
+                if current_square[0] == dest_square[0]:
+                    if is_white(piece_name_raw): # 2 square movement (white)
+                        if int(dest_square[1]) == int(current_square[1]) + 1:
+                            return True
+                        elif int(dest_square[1]) == int(current_square[1]) + 2:
+                            intermediate_square = f"{dest_square[0]}{int(dest_square[1]) - 1}"
+                            return not square_contains_piece(dest_square) and not square_contains_piece(intermediate_square)
+                    if not is_white(piece_name_raw): # 2 square movement (black)
+                        if int(dest_square[1]) == int(current_square[1]) - 1:
+                            return True
+                        elif int(dest_square[1]) == int(current_square[1]) - 2:
+                            intermediate_square = f"{dest_square[0]}{int(dest_square[1]) + 1}"
+                            return not square_contains_piece(dest_square) and not square_contains_piece(intermediate_square)
                         return True
-                    if not is_white(piece_name_raw) and int(dest_square[1]) >= int(current_square[1]) - 2: # 2 square movement (black)
-                        return True
+                elif path_diagonal(current_square, dest_square):
+                    if is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) + 1:
+                        return square_contains_piece(dest_square)
+                    if not is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) - 1:
+                        return square_contains_piece(dest_square)
             return False
         case "rook":
             if path_linear(current_square, dest_square) and not is_obstructed(current_square, dest_square):
@@ -142,25 +178,23 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> None:
     move_to_square_center = UI.get_square_center(move_to_square)
     isOccupied, occupied_piece = get_piece(move_to_square_center)
 
-    if not isOccupied and piece_can_move(current_piece, move_to_square_center):
+    if not piece_can_move(current_piece, move_to_square_center):
+        ILLEGAL_MOVE_SOUND.play()
+        return
+    
+    if not isOccupied:
         rect.center = move_to_square_center
         PIECE_MOVE_SOUND.play()
         print("Moved: %s -> %s" % (current_piece, get_square(rect.center)[0])) # DEBUG
-    elif not piece_can_move(current_piece, move_to_square_center):
-        ILLEGAL_MOVE_SOUND.play()
-        return
     else:
-        if not own_piece(current_piece, occupied_piece):
-            remove_piece(occupied_piece)
-            rect.center = move_to_square_center
-            PIECE_CAPTURE_SOUND.play()
-            print("Moved: %s -> %s" % (current_piece, move_to_square)) # DEBUG
+        capture_piece(rect, occupied_piece, move_to_square_center)
 
 def get_allowed_moves(piece_name: str) -> dict:
     piece = piece_name[2:-1]
     piece_rect: pygame.Rect = chess_pieces.get(piece_name).get_rect()
 
     moves = {"up": None, "down": None, "d_up": None, "d_down": None}
+    moves_list = []
     match piece:
         case "pawn":
             square_coords_0 = get_square(piece_rect.center)[0]
@@ -173,18 +207,31 @@ def get_allowed_moves(piece_name: str) -> dict:
                     differential = 1
                 else:
                     differential = 2
+                for i in range(1, differential + 1):
+                    coord_y = int(square_coords_0[1]) + i
+                    if coord_y > 8: # Out of bounds
+                        moves_list = []
+                        break
+                    square_coords_1 = f"{square_coords_0[0]}{coord_y}"
+                    if square_contains_piece(square_coords_1):
+                        break
+                    moves_list.append(get_square(square_coords_1))
+                moves["up"] = moves_list
             else:
                 if has_moved:
                     differential = -1
                 else:
                     differential = -2
-
-            moves_list = []
-            for i in range(abs(differential) + 1):
-                square_coords_1 = f"{square_coords_0[0]}{int(square_coords_0[1]) + i}"
-                square_rect_1 = get_square(square_coords_1)
-                moves_list.append(square_rect_1)
-            moves["up"] = moves_list
+                for i in range(1, abs(differential) + 1):
+                    coord_y = int(square_coords_0[1]) - i
+                    if coord_y < 1: # Out of bounds
+                        moves_list = []
+                        break
+                    square_coords_1 = f"{square_coords_0[0]}{coord_y}"
+                    if square_contains_piece(square_coords_1):
+                        break
+                    moves_list.append(get_square(square_coords_1))
+                moves["down"] = moves_list
         case "king":
             pass
         case _:
