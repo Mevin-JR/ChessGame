@@ -27,13 +27,21 @@ selected_piece_name: str = None
 
 def show_allowed_moves(surface: pygame.Surface, piece_name: str) -> None:
     move_highlight_color = (90, 90, 90)
-    moves_dict = logic.get_allowed_moves(piece_name)
-    values = [value for value in moves_dict.values() if value is not None]
-    if len(values) == 0:
+    moves_dict, capture_dict = logic.get_allowed_moves(piece_name)
+    move_values = [value for value in moves_dict.values() if value is not None]
+    capture_values = [value for value in capture_dict.values() if value is not None]
+    if len(move_values) == 0:
         return
-    for items in values:
+    for items in move_values:
         for square in items:
             pygame.draw.circle(surface, move_highlight_color, square.center, 10)
+    
+    if len(capture_values) == 0:
+        return
+    for items in capture_values:
+        for square in items:
+            highlight_square = square.inflate(2, 2)
+            pygame.draw.rect(surface, (200, 0, 0), highlight_square, 5)
 
 def select_piece() -> None:
     if selected_piece is not None:

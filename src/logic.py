@@ -49,16 +49,15 @@ def get_piece(mouse_pos: tuple):
 def is_white(piece_name: str) -> bool:
     return piece_name[0] == "w"
 
-def remove_piece(piece_name: str):
+def remove_piece(piece_name: str) -> None:
     all_pieces.remove(chess_pieces.get(piece_name))
     print("Removed: ", chess_pieces.get(piece_name)) # DEBUG
     del chess_pieces[piece_name]    
 
-def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple):
+def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple) -> None:
     remove_piece(target)
     piece_rect.center = target_square
     PIECE_CAPTURE_SOUND.play()
-
 
 def own_piece(piece_name: str, target_name: str) -> bool:
     if target_name is None:
@@ -193,7 +192,8 @@ def get_allowed_moves(piece_name: str) -> dict:
     piece = piece_name[2:-1]
     piece_rect: pygame.Rect = chess_pieces.get(piece_name).get_rect()
 
-    moves = {"up": None, "down": None, "d_up": None, "d_down": None}
+    moves = {"up": None, "down": None, "dl_up": None, "dl_down": None, "dr_up": None, "dr_down": None}
+    capture_moves = {"up": None, "down": None, "dl_up": None, "dl_down": None, "dr_up": None, "dr_down": None}
     moves_list = []
     match piece:
         case "pawn":
@@ -217,6 +217,12 @@ def get_allowed_moves(piece_name: str) -> dict:
                         break
                     moves_list.append(get_square(square_coords_1))
                 moves["up"] = moves_list
+                dl_up = f"{chr(ord(square_coords_0[0]) - 1)}{int(square_coords_0[1]) + 1}"
+                dr_up = f"{chr(ord(square_coords_0[0]) + 1)}{int(square_coords_0[1]) + 1}"
+                if square_contains_piece(dl_up):
+                    capture_moves["dl_up"] = [get_square(dl_up)]
+                if square_contains_piece(dr_up):
+                    capture_moves["dr_up"] = [get_square(dr_up)]
             else:
                 if has_moved:
                     differential = -1
@@ -232,8 +238,14 @@ def get_allowed_moves(piece_name: str) -> dict:
                         break
                     moves_list.append(get_square(square_coords_1))
                 moves["down"] = moves_list
+                dl_down = f"{chr(ord(square_coords_0[0]) - 1)}{int(square_coords_0[1]) - 1}"
+                dr_down = f"{chr(ord(square_coords_0[0]) + 1)}{int(square_coords_0[1]) - 1}"
+                if square_contains_piece(dl_down):
+                    capture_moves["dl_down"] = [get_square(dl_down)]
+                if square_contains_piece(dr_down):
+                    capture_moves["dr_down"] = [get_square(dr_down)]
         case "king":
             pass
         case _:
             pass
-    return moves
+    return moves, capture_moves
