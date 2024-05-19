@@ -2,19 +2,22 @@ import pygame
 import os
 from typing import overload
 
+from utils import WHITE_START_POSITIONS, BLACK_START_POSITIONS
 import UI
 
+# Sound fx's
 pygame.mixer.init()
 PIECE_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_move.wav"))
 PIECE_CAPTURE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_capture.wav"))
 ILLEGAL_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "illegal_move.wav"))
 
-chess_pieces = UI.chess_pieces
-square_rects = UI.square_rects
-all_pieces = UI.all_pieces
+# Variable initialization
+square_rects = UI.square_rects_dict
+chess_pieces = UI.chess_pieces_dict
+all_pieces = UI.all_pieces_group
 
 @overload
-def get_square(mouse_pos: tuple) -> tuple[str, pygame.Rect]:
+def get_square(mouse_pos: tuple) -> tuple[str, pygame.Rect]: # get_square() Method overloading
     ...
 
 @overload
@@ -22,7 +25,7 @@ def get_square(square_coords: str) -> pygame.Rect:
     ...
 
 def get_square(arg):
-    if isinstance(arg, tuple):
+    if isinstance(arg, tuple): # Check for input type
         for square_coords, square_rect in square_rects.items():
             if square_rect.collidepoint(arg):
                 return square_coords, square_rect
@@ -32,45 +35,48 @@ def get_square(arg):
     else:
         raise ValueError("Argument must be a tuple or a string")
 
-def square_contains_piece(square: str) -> bool:
+def square_contains_piece(square: str) -> bool: # Checks if specified square holds a piece
     square_rect = get_square(square)
+    if square_rect is None:
+        return False
     for piece in chess_pieces.values():
         if piece.rect.collidepoint(square_rect.center):
             return True
     return False
 
-def get_piece(mouse_pos: tuple):
+def get_piece(mouse_pos: tuple) -> tuple[bool, str]:
     for piece_name, piece in chess_pieces.items():
         if piece.rect.collidepoint(mouse_pos):
             print("Selected: %s [%s]" % (piece_name, get_square(piece.rect.center)[0])) # DEBUG
             return True, piece_name
     return False, None
 
-def is_white(piece_name: str) -> bool:
+def is_white(piece_name: str) -> bool: # Checks if piece is white
     return piece_name[0] == "w"
 
-def remove_piece(piece_name: str) -> None:
-    all_pieces.remove(chess_pieces.get(piece_name))
+def remove_piece(piece_name: str) -> None: # Remove piece from board
+    all_pieces.remove(chess_pieces.get(piece_name)) # Remeving from group
     print("Removed: ", chess_pieces.get(piece_name)) # DEBUG
-    del chess_pieces[piece_name]    
+    del chess_pieces[piece_name] # Removing piece from dictionary
 
-def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple) -> None:
+def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple) -> None: # Handle piece capture
     remove_piece(target)
     piece_rect.center = target_square
     PIECE_CAPTURE_SOUND.play()
 
-def own_piece(piece_name: str, target_name: str) -> bool:
+def friendly_piece(piece_name: str, target_name: str) -> bool: # Check if piece is friendly
     if target_name is None:
         return False
     return piece_name[0] == target_name[0]
 
-def path_linear(start: str, dest: str) -> bool:
+def path_linear(start: str, dest: str) -> bool: # Check if piece path is linear (vertical or horizontal)
     return start[0] == dest[0] or start[1] == dest[1]
 
-def path_diagonal(start: str, dest: str) -> bool:
+def path_diagonal(start: str, dest: str) -> bool: # Check if piece path is diagonal
     return start[0] != dest[0] and start[1] != dest[1]
 
-def is_obstructed(start: str, dest: str) -> bool:
+def is_obstructed(start: str, dest: str) -> bool: # Check for obstruction
+    # Classify piece path (vertical, horizontal, diagonal)
     if start[0] == dest[0]:
         direction = "v"
     elif start[1] == dest[1]:
@@ -79,6 +85,7 @@ def is_obstructed(start: str, dest: str) -> bool:
         direction = "d"
     
     match direction:
+        # Vertical path
         case "v":
             up_down_diff = 1 if int(start[1]) < int(dest[1]) else -1
             square_num = int(start[1]) + up_down_diff
@@ -97,6 +104,7 @@ def is_obstructed(start: str, dest: str) -> bool:
                 square_num += up_down_diff
             return obstructed
         
+        # Horizontal path
         case "h":
             left_right_diff = 1 if ord(start[0]) < ord(dest[0]) else -1
             square_alph = ord(start[0]) + left_right_diff
@@ -113,9 +121,8 @@ def is_obstructed(start: str, dest: str) -> bool:
                         obstructed = True
                 square_alph += left_right_diff
             return obstructed
-        # TODO: Complete diagonal path check
 
-def piece_can_move(piece_name_raw: str, dest: tuple) -> bool:
+def piece_can_move(piece_name_raw: str, dest: tuple) -> bool: # Check if piece can move (based on its characteristics)
     current_square = get_square(chess_pieces.get(piece_name_raw).rect.center)[0]
     dest_square = get_square(dest)[0]
     if current_square == dest_square:
@@ -128,7 +135,7 @@ def piece_can_move(piece_name_raw: str, dest: tuple) -> bool:
         case "pawn":
             if is_obstructed(current_square, dest_square):
                 return False
-            init_pos: dict = UI.pieces_init_pos_black if not is_white(piece_name_raw) else UI.pieces_init_pos_white
+            init_pos: dict = BLACK_START_POSITIONS if not is_white(piece_name_raw) else WHITE_START_POSITIONS
             has_moved = True if get_square(piece_rect.center)[0] != init_pos.get(piece_name_raw) else False
             if has_moved:
                 if current_square[0] == dest_square[0]: # Only vertical movement
@@ -169,7 +176,7 @@ def piece_can_move(piece_name_raw: str, dest: tuple) -> bool:
             return False
     return False
 
-def move_piece(current_piece: str, mouse_pos: tuple) -> None:
+def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     piece_obj = chess_pieces.get(current_piece)
     rect: pygame.Rect = piece_obj.rect
 
@@ -187,6 +194,8 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> None:
         print("Moved: %s -> %s" % (current_piece, get_square(rect.center)[0])) # DEBUG
     else:
         capture_piece(rect, occupied_piece, move_to_square_center)
+    
+    return f"{current_piece[2]}{move_to_square}"
 
 def get_allowed_moves(piece_name: str) -> dict:
     piece = piece_name[2:-1]
@@ -199,7 +208,7 @@ def get_allowed_moves(piece_name: str) -> dict:
         case "pawn":
             square_coords_0 = get_square(piece_rect.center)[0]
 
-            init_pos: dict = UI.pieces_init_pos_black if not is_white(piece_name) else UI.pieces_init_pos_white
+            init_pos: dict = BLACK_START_POSITIONS if not is_white(piece_name) else WHITE_START_POSITIONS
             has_moved = True if square_coords_0 != init_pos.get(piece_name) else False
             
             if is_white(piece_name):

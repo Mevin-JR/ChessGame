@@ -1,118 +1,9 @@
 import pygame
 import os
 
-# Chess board notations
-# ['a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'], 
-# ['a7', 'b7', 'c7', 'd7', 'e7', 'f7', 'g7', 'h7'], 
-# ['a6', 'b6', 'c6', 'd6', 'e6', 'f6', 'g6', 'h6'], 
-# ['a5', 'b5', 'c5', 'd5', 'e5', 'f5', 'g5', 'h5'], 
-# ['a4', 'b4', 'c4', 'd4', 'e4', 'f4', 'g4', 'h4'], 
-# ['a3', 'b3', 'c3', 'd3', 'e3', 'f3', 'g3', 'h3'], 
-# ['a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2'], 
-# ['a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1']
+from utils import *
 
-# Initialize var
-files = os.listdir(os.path.join("assets", "chess_pieces"))
-
-square_size = 80
-board_surface = pygame.Surface((8 * square_size + 50, 8 * square_size + 50))
-sq_dark = (184,139,74)
-sq_light = (227,193,111)
-
-square_rects = {} # Global rects dictionaty
-chess_pieces = {}
-
-all_pieces = pygame.sprite.Group()
-black = pygame.sprite.Group()
-white = pygame.sprite.Group()
-
-pieces_init_pos_black = {
-    "b_rook1": "a8", "b_knight1": "b8", "b_bishop1": "c8", "b_queen0": "d8", "b_king0": "e8", "b_bishop2": "f8", "b_knight2": "g8", "b_rook2": "h8",
-    "b_pawn1": "a7", "b_pawn2": "b7", "b_pawn3": "c7", "b_pawn4": "d7", "b_pawn5": "e7", "b_pawn6": "f7", "b_pawn7": "g7", "b_pawn8": "h7",
-}
-
-pieces_init_pos_white = {
-    "w_pawn1": "a2", "w_pawn2": "b2", "w_pawn3": "c2", "w_pawn4": "d2", "w_pawn5": "e2", "w_pawn6": "f2", "w_pawn7": "g2", "w_pawn8": "h2",
-    "w_rook1": "a1", "w_knight1": "b1", "w_bishop1": "c1", "w_queen0": "d1", "w_king0": "e1", "w_bishop2": "f1", "w_knight2": "g1", "w_rook2": "h1",
-}
-
-# Chess board UI
-def chess_board(font: pygame.font.Font, offset_x: int, offset_y: int) -> tuple[pygame.Surface, dict]:
-    square_rects.clear()
-
-    # Surface
-    board_surface.fill((50, 50, 50))
-
-    for row in range(8):
-        for col in range(8):
-            color = sq_light if (row + col) % 2 == 0 else sq_dark
-            rect = pygame.Rect(50 + col * square_size, row * square_size, square_size, square_size)
-            pygame.draw.rect(board_surface, color, rect)
-
-            square_coord = f"{chr(97 + col)}{8 - row}"
-            square_rects[square_coord] = rect
-
-    add_notations(board_surface, font)
-
-    # Adjust to offset
-    count = 0
-    for square_coord, square_rect in square_rects.items():
-        square_rect.x +=  offset_x
-        square_rect.y += offset_y
-        if count == 63:
-            break
-        count += 1
-
-    return board_surface, square_rects
-
-def add_notations(board_surface: pygame.Surface, font: pygame.font.Font) -> None:
-    square_size = 80
-    y_num = 8
-    y_left = 10
-    y_top_init = 30
-
-    x_alph = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-    alph_count = 0
-    x_left_init = 80
-    x_top = 660
-
-    for row in range(9):
-        if row < 8:
-            y_label = font.render(str(y_num), True, (255, 255, 255))
-            board_surface.blit(y_label, (y_left, y_top_init))
-            y_num -= 1
-            y_top_init = 30 + (row + 1) * square_size
-        else:
-            for col in range(8):
-                x_label = font.render(x_alph[alph_count], True, (255, 255, 255))
-                board_surface.blit(x_label, (x_left_init, x_top))
-                alph_count += 1
-                x_left_init = 80 + (col + 1) * square_size
-
-def get_square_center(square: str) -> tuple:
-    rect: pygame.Rect = square_rects.get(square, None)
-    if rect is not None:
-        return rect.center
-    return None
-
-# Chess pieces
-def get_black_pieces() -> dict:
-    black_pieces = {}
-    black_pieces_png = [png for png in files if "b_" in png]
-    for piece in black_pieces_png:
-        piece_name = piece[:-4]
-        black_pieces[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
-    return black_pieces
-
-def get_white_pieces() -> dict:
-    white_pieces = {}
-    white_pieces_png = [png for png in files if "w_" in png]
-    for piece in white_pieces_png:
-        piece_name = piece[:-4]
-        white_pieces[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
-    return white_pieces
-
-class Pieces(pygame.sprite.Sprite):
+class Pieces(pygame.sprite.Sprite): # Sprites class
     def __init__(self, image, pos):
         super().__init__()
         self.image = image
@@ -121,27 +12,105 @@ class Pieces(pygame.sprite.Sprite):
     def get_rect(self) -> pygame.Rect:
         return self.rect
 
-def initialize_pieces() -> tuple[pygame.sprite.Group, pygame.sprite.Group, pygame.sprite.Group]:
-    black_pieces = []
-    black_pieces_raw = get_black_pieces()
-    white_pieces = []
-    white_pieces_raw = get_white_pieces()
-    chess_pieces.clear()
+# Global variables (used in multiple files)
+square_rects_dict = {}
+chess_pieces_dict = {}
+all_pieces_group = pygame.sprite.Group()
 
-    # Black Pieces
-    for piece, square in pieces_init_pos_black.items():
-        piece_obj = Pieces(black_pieces_raw.get(piece[:-1]), get_square_center(square))
-        black_pieces.append(piece_obj)
-        chess_pieces[piece] = piece_obj
-    all_pieces.add(piece for piece in black_pieces)
-    black.add(piece for piece in black_pieces)
+class UI: # User Interface class
+    def __init__(self) -> None:
+        # Instance varaible initialization
+        self.white_pieces_surface = {}
+        self.black_pieces_surface = {}
+        self.board_surface = pygame.Surface(
+            (8 * SQUARE_SIZE + 50, 8 * SQUARE_SIZE + 50)) # Chess board (whole)
+    
+    def chess_board(self) -> tuple[pygame.Surface, dict]:
+        square_rects_dict.clear() # Reset rects dictionary
+        self.board_surface.fill(GRAY)
 
-    # White Pieces
-    for piece, square in pieces_init_pos_white.items():
-        piece_obj = Pieces(white_pieces_raw.get(piece[:-1]), get_square_center(square))
-        white_pieces.append(piece_obj)
-        chess_pieces[piece] = piece_obj
-    all_pieces.add(piece for piece in white_pieces)
-    white.add(piece for piece in white_pieces)
+        # Creating the 64 squares of the chess board
+        for row in range(8):
+            for col in range(8):
+                square_color = LIGHT_SQUARE_COLOR if (row + col) % 2 == 0 else DARK_SQUARE_COLOR
+                square_rect = pygame.Rect(50 + col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+                pygame.draw.rect(self.board_surface, square_color, square_rect)
+                square_coord = f"{chr(97 + col)}{8 - row}"
+                square_rects_dict[square_coord] = square_rect # Storing square coords and rects
 
-    return black, white, all_pieces
+        self.add_notations() # Adding board notations
+
+        # Adjusting to offset of the board
+        count = 0
+        for square_coord, square_rect in square_rects_dict.items():
+            square_rect.x +=  BOARD_OFFSET_X
+            square_rect.y += BOARD_OFFSET_Y
+            if count == 63:
+                break
+            count += 1
+
+        return self.board_surface, square_rects_dict
+
+    def add_notations(self) -> None: # Board notations (Ranks & Files)
+        # Ranks (Y axis)
+        rank_left_margin = 10
+        starting_rank = 8
+        rank_top_margin = 30
+
+        # Files (X axis)
+        files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+        file_count = 0
+        file_top_margin = 660
+        file_left_margin = 80
+
+        for row in range(9):
+            if row < 8:
+                rank = FONT32.render(str(starting_rank), True, WHITE)
+                self.board_surface.blit(rank, (rank_left_margin, rank_top_margin))
+
+                rank_top_margin = 30 + (row + 1) * SQUARE_SIZE
+                starting_rank -= 1 # Ranks in decreasing order (top - bottom)
+            else:
+                for col in range(8):
+                    file = FONT32.render(files[file_count], True, WHITE)
+                    self.board_surface.blit(file, (file_left_margin, file_top_margin))
+
+                    file_left_margin = 80 + (col + 1) * SQUARE_SIZE
+                    file_count += 1 # Files in alphabetic order (left - right)
+
+    def load_white_pieces(self) -> None: # Loading image (Surface) of white pieces
+        white_pieces_png = [png for png in PIECE_FILES if "w_" in png]
+        for piece in white_pieces_png:
+            piece_name = piece[:-4]
+            self.white_pieces_surface[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
+
+    def load_black_pieces(self) -> None: # Loading image (Surface) of black pieces
+        black_pieces_png = [png for png in PIECE_FILES if "b_" in png]
+        for piece in black_pieces_png:
+            piece_name = piece[:-4]
+            self.black_pieces_surface[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
+    
+    def initialize_pieces(self) -> pygame.sprite.Group: # Rendering pieces on chess board
+        chess_pieces_dict.clear()
+
+        # White Pieces
+        self.load_white_pieces()
+        for piece, square in WHITE_START_POSITIONS.items():
+            piece_obj = Pieces(self.white_pieces_surface.get(piece[:-1]), get_square_center(square))
+            chess_pieces_dict[piece] = piece_obj
+            all_pieces_group.add(piece_obj) # Add piece in group
+
+        # Black Pieces
+        self.load_black_pieces()
+        for piece, square in BLACK_START_POSITIONS.items():
+            piece_obj = Pieces(self.black_pieces_surface.get(piece[:-1]), get_square_center(square))
+            chess_pieces_dict[piece] = piece_obj
+            all_pieces_group.add(piece_obj) # Add piece in group
+
+        return all_pieces_group
+
+def get_square_center(square: str) -> tuple:
+    rect: pygame.Rect = square_rects_dict.get(square, None)
+    if rect is not None:
+        return rect.center # Position values of square center
+    return None
