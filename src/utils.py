@@ -1,5 +1,6 @@
 import pygame
 import os
+from typing import overload
 
 # Constants
 GRAY = (50, 50, 50)
@@ -30,3 +31,57 @@ DARK_SQUARE_COLOR = (184, 139, 74)
 LIGHT_SQUARE_COLOR = (227, 193, 111)
 
 PIECE_FILES = os.listdir(os.path.join("assets", "chess_pieces"))
+
+# Global variables
+square_rects_dict, chess_pieces_dict = {}, {}
+all_pieces_group = pygame.sprite.Group()
+
+# Helper functions
+@overload
+def get_square(mouse_pos: tuple) -> tuple[str, pygame.Rect]: # get_square() Method overloading
+    ...
+
+@overload
+def get_square(square_coords: str) -> pygame.Rect:
+    ...
+
+def get_square(arg):
+    if isinstance(arg, tuple): # Check for input type
+        for square_coords, square_rect in square_rects_dict.items():
+            if square_rect.collidepoint(arg):
+                return square_coords, square_rect
+        return None, None
+    elif isinstance(arg, str):
+        return square_rects_dict.get(arg)
+    else:
+        raise ValueError("Argument must be a tuple or a string")
+
+def square_contains_piece(square: str) -> bool: # Checks if specified square holds a piece
+    square_rect = get_square(square)
+    if square_rect is None:
+        return False
+    for piece in chess_pieces_dict.values():
+        if piece.rect.collidepoint(square_rect.center):
+            return True
+    return False
+
+def get_square_center(square: str) -> tuple:
+    rect: pygame.Rect = square_rects_dict.get(square, None)
+    if rect is not None:
+        return rect.center # Position values of square center
+    return None
+
+def get_piece(mouse_pos: tuple) -> tuple[bool, str]:
+    for piece_name, piece in chess_pieces_dict.items():
+        if piece.rect.collidepoint(mouse_pos):
+            print("Selected: %s [%s]" % (piece_name, get_square(piece.rect.center)[0])) # DEBUG
+            return True, piece_name
+    return False, None
+
+def friendly_piece(piece_name: str, target_name: str) -> bool: # Check if piece is friendly
+    if target_name is None:
+        return False
+    return piece_name[0] == target_name[0]
+
+def is_white(piece_name: str) -> bool: # Checks if piece is white
+    return piece_name[0] == "w"

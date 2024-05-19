@@ -12,11 +12,6 @@ class Pieces(pygame.sprite.Sprite): # Sprites class
     def get_rect(self) -> pygame.Rect:
         return self.rect
 
-# Global variables (used in multiple files)
-square_rects_dict = {}
-chess_pieces_dict = {}
-all_pieces_group = pygame.sprite.Group()
-
 class UI: # User Interface class
     def __init__(self) -> None:
         # Instance varaible initialization
@@ -108,9 +103,3 @@ class UI: # User Interface class
             all_pieces_group.add(piece_obj) # Add piece in group
 
         return all_pieces_group
-
-def get_square_center(square: str) -> tuple:
-    rect: pygame.Rect = square_rects_dict.get(square, None)
-    if rect is not None:
-        return rect.center # Position values of square center
-    return None

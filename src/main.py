@@ -50,7 +50,7 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
 def select_piece() -> None: # Highlight selection of piece
     if selected_piece is not None:
         piece_rect: pygame.Rect = selected_piece.get_rect()
-        square_rect = logic.get_square(piece_rect.center)[1]
+        square_rect = get_square(piece_rect.center)[1]
 
         overlay_color = (255, 255, 0)
         overlay_surface = pygame.Surface((square_rect.width, square_rect.height), pygame.SRCALPHA)
@@ -97,24 +97,24 @@ def main(): # Main function/loop
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
                 clicked = True
-                clicked_square = logic.get_square(mouse_pos)[0]
+                clicked_square = get_square(mouse_pos)[0]
                 if selected and clicked_square is not None: # Piece selected and clicked in valid square
-                    friedly_piece = logic.friendly_piece(piece_name, logic.get_piece(mouse_pos)[1])
+                    friedly_piece = friendly_piece(piece_name, get_piece(mouse_pos)[1])
                     if friedly_piece:
                         selected, piece_name = logic.get_piece(mouse_pos) # Switch selection if clicked on friendly piece
-                        selected_piece, selected_piece_name = UI.chess_pieces_dict.get(piece_name), piece_name # Record selection
+                        selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
                     else:
                         move = logic.move_piece(piece_name, mouse_pos) # Move piece
                         played_moves.append(move) # Record move
                         selected = False
                         selected_piece = None
                 else:
-                    selected, piece_name = logic.get_piece(mouse_pos) # Select piece
-                    selected_piece, selected_piece_name = UI.chess_pieces_dict.get(piece_name), piece_name # Record selection
+                    selected, piece_name = get_piece(mouse_pos) # Select piece
+                    selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
 
             if event.type == pygame.MOUSEBUTTONUP and clicked == True:
                 clicked = False
-                print("Clicked square: ", logic.get_square(mouse_pos)[0]) # DEBUG
+                print("Clicked square: ", get_square(mouse_pos)[0]) # DEBUG
 
         add_graphics()
 
