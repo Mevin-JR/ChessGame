@@ -39,6 +39,14 @@ def piece_can_move(piece_name_raw: str, dest: tuple) -> bool: # Check if piece c
                 for move_list in moves.values():
                     if dest_square in move_list:
                         return True
+        case "rook":
+            piece = Rook(piece_name_raw, piece_rect.center, dest)
+            can_move, moves = piece.get_allowed_moves()
+
+            if can_move:
+                for move_list in moves.values():
+                    if dest_square in move_list:
+                        return True
         case _:
             return False
     return False
@@ -49,6 +57,9 @@ def get_allowed_moves(piece_name: str, current_pos: tuple) -> dict:
     match piece_name_formatted:
         case "pawn":
             piece = Pawn(piece_name, current_pos)
+            moves = piece.get_allowed_moves()[1]
+        case "rook":
+            piece = Rook(piece_name, current_pos)
             moves = piece.get_allowed_moves()[1]
     return moves
 

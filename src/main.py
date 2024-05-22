@@ -34,7 +34,7 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
     if not allowed_moves:
         return
     
-    moves = allowed_moves.get("forward", [])
+    moves = allowed_moves.get("moves", [])
     captures = allowed_moves.get("capture", [])
     
     if moves:

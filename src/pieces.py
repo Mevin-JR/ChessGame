@@ -11,8 +11,8 @@ class Pawn:
         can_move = True
         current_square = get_square(self.current_pos)[0]
         dest_square = get_square(self.dest_pos)[0] if self.dest_pos is not None else None
-
         starting_rank = int(current_square[1])
+
         direction = 1 if is_white(self.pawn_name) else -1
 
         if has_moved(self.pawn_name, current_square):
@@ -20,7 +20,7 @@ class Pawn:
             next_square_coord = f"{current_square[0]}{next_square_rank}"
 
             if square_rects_dict.get(next_square_coord) is not None and not square_contains_piece(next_square_coord):
-                self.moves["forward"] = [next_square_coord]
+                self.moves["moves"] = [next_square_coord]
 
         else:
             forward_moves = []
@@ -40,7 +40,7 @@ class Pawn:
                 direction_2 = direction_2 + 1 if is_white(self.pawn_name) else direction_2 - 1
 
             if forward_moves:
-                self.moves["forward"] = forward_moves
+                self.moves["moves"] = forward_moves
             else:
                 can_move = False
 
@@ -66,3 +66,63 @@ class Pawn:
             capture_moves.append(right_diagonal)    
             
         return capture_moves
+
+class Rook:
+    def __init__(self, rook_name: str, current_pos: tuple, dest_pos: tuple = None):
+        self.rook_name = rook_name
+        self.current_pos = current_pos
+        self.dest_pos = dest_pos
+        self.moves = {}
+        self.capture_moves = []
+
+    def get_allowed_moves(self) -> tuple[bool, dict]:
+        can_move = True
+        current_square = get_square(self.current_pos)[0]
+        dest_square = get_square(self.dest_pos)[0] if self.dest_pos is not None else None
+
+        file = current_square[0]
+        starting_file = ord(current_square[0])
+        rank = int(current_square[1])
+        starting_rank = int(current_square[1])
+
+        moves_list = []
+        for square_rank in range(starting_rank + 1, 9):
+            next_coord = f"{file}{square_rank}"
+            if not square_contains_piece(next_coord):
+                moves_list.append(next_coord)
+            else:
+                if not friendly_piece(current_square, next_coord):
+                    self.capture_moves.append(next_coord)
+                break
+        
+        for square_rank in range(starting_rank - 1, 0, -1):
+            next_coord = f"{file}{square_rank}"
+            if not square_contains_piece(next_coord):
+                moves_list.append(next_coord)
+            else:
+                if not friendly_piece(current_square, next_coord):
+                    self.capture_moves.append(next_coord)
+                break
+
+        for file_unicode in range(starting_file + 1, 105, 1):
+            next_coord = f"{chr(file_unicode)}{rank}"
+            if not square_contains_piece(next_coord):
+                moves_list.append(next_coord)
+            else:
+                if not friendly_piece(current_square, next_coord):
+                    self.capture_moves.append(next_coord)
+                break
+        
+        for file_unicode in range(starting_file - 1, 96, -1):
+            next_coord = f"{chr(file_unicode)}{rank}"
+            if not square_contains_piece(next_coord):
+                moves_list.append(next_coord)
+            else: 
+                if not friendly_piece(current_square, next_coord):
+                    self.capture_moves.append(next_coord)
+                break
+                
+        self.moves["moves"] = moves_list
+        self.moves["capture"] = self.capture_moves
+
+        return can_move, self.moves
