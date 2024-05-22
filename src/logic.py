@@ -2,6 +2,7 @@ import pygame
 import os
 
 from utils import *
+from pieces import *
 
 # Sound fx's
 pygame.mixer.init()
@@ -19,192 +20,56 @@ def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple) ->
     piece_rect.center = target_square
     PIECE_CAPTURE_SOUND.play()
 
-def path_linear(start: str, dest: str) -> bool: # Check if piece path is linear (vertical or horizontal)
-    return start[0] == dest[0] or start[1] == dest[1]
-
-def path_diagonal(start: str, dest: str) -> bool: # Check if piece path is diagonal
-    return start[0] != dest[0] and start[1] != dest[1]
-
-def is_obstructed(start: str, dest: str) -> bool: # Check for obstruction
-    # Classify piece path (vertical, horizontal, diagonal)
-    if start[0] == dest[0]:
-        direction = "v"
-    elif start[1] == dest[1]:
-        direction = "h"
-    else:
-        direction = "d"
-    
-    match direction:
-        # Vertical path
-        case "v":
-            up_down_diff = 1 if int(start[1]) < int(dest[1]) else -1
-            square_num = int(start[1]) + up_down_diff
-            obstructed = False
-            run = True
-            while run:
-                if square_num > int(dest[1]) or square_num < int(dest[1]):
-                    run = False
-                    break
-                square = f"{start[0]}{square_num}"
-                print("Check: ", square)
-                for piece in chess_pieces_dict.values():
-                    if piece.rect.collidepoint(get_square_center(square)):
-                        run = False
-                        obstructed = True
-                square_num += up_down_diff
-            return obstructed
-        
-        # Horizontal path
-        case "h":
-            left_right_diff = 1 if ord(start[0]) < ord(dest[0]) else -1
-            square_alph = ord(start[0]) + left_right_diff
-            obstructed = False
-            run = True
-            while run or obstructed is True:
-                if chr(square_alph) == dest[0]:
-                    run = False
-                    break
-                square = f"{chr(square_alph)}{start[1]}"
-                for piece in chess_pieces_dict.values():
-                    if piece.rect.collidepoint(get_square_center(square)):
-                        run = False
-                        obstructed = True
-                square_alph += left_right_diff
-            return obstructed
-
 def piece_can_move(piece_name_raw: str, dest: tuple) -> bool: # Check if piece can move (based on its characteristics)
+    piece_name_formatted = piece_name_raw[2:-1]
     current_square = get_square(chess_pieces_dict.get(piece_name_raw).rect.center)[0]
     dest_square = get_square(dest)[0]
+    piece_obj = chess_pieces_dict.get(piece_name_raw)
+    piece_rect: pygame.Rect = piece_obj.get_rect()
+
     if current_square == dest_square:
         return False
     
-    piece_obj = chess_pieces_dict.get(piece_name_raw)
-    piece_rect: pygame.Rect = piece_obj.get_rect()
-    piece = piece_name_raw[2:-1]
-    match piece:
+    match piece_name_formatted:
         case "pawn":
-            if is_obstructed(current_square, dest_square):
-                return False
-            init_pos: dict = BLACK_START_POSITIONS if not is_white(piece_name_raw) else WHITE_START_POSITIONS
-            has_moved = True if get_square(piece_rect.center)[0] != init_pos.get(piece_name_raw) else False
-            if has_moved:
-                if current_square[0] == dest_square[0]: # Only vertical movement
-                    if is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) + 1: # Prevent moving back (white)
+            piece = Pawn(piece_name_raw, piece_rect.center, dest)
+            can_move, moves = piece.get_allowed_moves()
+
+            if can_move:
+                for move_list in moves.values():
+                    if dest_square in move_list:
                         return True
-                    if not is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) - 1: # Prevent moving back (black)
-                        return True
-                elif path_diagonal(current_square, dest_square):
-                    if is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) + 1:
-                        return square_contains_piece(dest_square)
-                    if not is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) - 1:
-                        return square_contains_piece(dest_square)
-            else:
-                if current_square[0] == dest_square[0]:
-                    if is_white(piece_name_raw): # 2 square movement (white)
-                        if int(dest_square[1]) == int(current_square[1]) + 1:
-                            return True
-                        elif int(dest_square[1]) == int(current_square[1]) + 2:
-                            intermediate_square = f"{dest_square[0]}{int(dest_square[1]) - 1}"
-                            return not square_contains_piece(dest_square) and not square_contains_piece(intermediate_square)
-                    if not is_white(piece_name_raw): # 2 square movement (black)
-                        if int(dest_square[1]) == int(current_square[1]) - 1:
-                            return True
-                        elif int(dest_square[1]) == int(current_square[1]) - 2:
-                            intermediate_square = f"{dest_square[0]}{int(dest_square[1]) + 1}"
-                            return not square_contains_piece(dest_square) and not square_contains_piece(intermediate_square)
-                        return True
-                elif path_diagonal(current_square, dest_square):
-                    if is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) + 1:
-                        return square_contains_piece(dest_square)
-                    if not is_white(piece_name_raw) and int(dest_square[1]) == int(current_square[1]) - 1:
-                        return square_contains_piece(dest_square)
-            return False
-        case "rook":
-            if path_linear(current_square, dest_square) and not is_obstructed(current_square, dest_square):
-                return True
         case _:
             return False
     return False
+
+def get_allowed_moves(piece_name: str, current_pos: tuple) -> dict:
+    piece_name_formatted = piece_name[2:-1]
+    moves = {}
+    match piece_name_formatted:
+        case "pawn":
+            piece = Pawn(piece_name, current_pos)
+            moves = piece.get_allowed_moves()[1]
+    return moves
 
 def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     piece_obj = chess_pieces_dict.get(current_piece)
     rect: pygame.Rect = piece_obj.rect
 
-    move_to_square = get_square(mouse_pos)[0]
-    move_to_square_center = get_square_center(move_to_square)
-    isOccupied, occupied_piece = get_piece(move_to_square_center)
+    target_square = get_square(mouse_pos)[0]
+    target_square_center = get_square_center(target_square)
+    isOccupied, occupied_piece = select_piece(target_square_center) # Change this
 
-    if not piece_can_move(current_piece, move_to_square_center):
+    can_move = piece_can_move(current_piece, target_square_center)
+    if not can_move:
         ILLEGAL_MOVE_SOUND.play()
         return
     
     if not isOccupied:
-        rect.center = move_to_square_center
+        rect.center = target_square_center
         PIECE_MOVE_SOUND.play()
         print("Moved: %s -> %s" % (current_piece, get_square(rect.center)[0])) # DEBUG
     else:
-        capture_piece(rect, occupied_piece, move_to_square_center)
+        capture_piece(rect, occupied_piece, target_square_center)
     
-    return f"{current_piece[2]}{move_to_square}"
-
-def get_allowed_moves(piece_name: str) -> dict:
-    piece = piece_name[2:-1]
-    piece_rect: pygame.Rect = chess_pieces_dict.get(piece_name).get_rect()
-
-    moves = {"up": None, "down": None, "dl_up": None, "dl_down": None, "dr_up": None, "dr_down": None}
-    capture_moves = {"up": None, "down": None, "dl_up": None, "dl_down": None, "dr_up": None, "dr_down": None}
-    moves_list = []
-    match piece:
-        case "pawn":
-            square_coords_0 = get_square(piece_rect.center)[0]
-
-            init_pos: dict = BLACK_START_POSITIONS if not is_white(piece_name) else WHITE_START_POSITIONS
-            has_moved = True if square_coords_0 != init_pos.get(piece_name) else False
-            
-            if is_white(piece_name):
-                if has_moved:
-                    differential = 1
-                else:
-                    differential = 2
-                for i in range(1, differential + 1):
-                    coord_y = int(square_coords_0[1]) + i
-                    if coord_y > 8: # Out of bounds
-                        moves_list = []
-                        break
-                    square_coords_1 = f"{square_coords_0[0]}{coord_y}"
-                    if square_contains_piece(square_coords_1):
-                        break
-                    moves_list.append(get_square(square_coords_1))
-                moves["up"] = moves_list
-                dl_up = f"{chr(ord(square_coords_0[0]) - 1)}{int(square_coords_0[1]) + 1}"
-                dr_up = f"{chr(ord(square_coords_0[0]) + 1)}{int(square_coords_0[1]) + 1}"
-                if square_contains_piece(dl_up):
-                    capture_moves["dl_up"] = [get_square(dl_up)]
-                if square_contains_piece(dr_up):
-                    capture_moves["dr_up"] = [get_square(dr_up)]
-            else:
-                if has_moved:
-                    differential = -1
-                else:
-                    differential = -2
-                for i in range(1, abs(differential) + 1):
-                    coord_y = int(square_coords_0[1]) - i
-                    if coord_y < 1: # Out of bounds
-                        moves_list = []
-                        break
-                    square_coords_1 = f"{square_coords_0[0]}{coord_y}"
-                    if square_contains_piece(square_coords_1):
-                        break
-                    moves_list.append(get_square(square_coords_1))
-                moves["down"] = moves_list
-                dl_down = f"{chr(ord(square_coords_0[0]) - 1)}{int(square_coords_0[1]) - 1}"
-                dr_down = f"{chr(ord(square_coords_0[0]) + 1)}{int(square_coords_0[1]) - 1}"
-                if square_contains_piece(dl_down):
-                    capture_moves["dl_down"] = [get_square(dl_down)]
-                if square_contains_piece(dr_down):
-                    capture_moves["dr_down"] = [get_square(dr_down)]
-        case "king":
-            pass
-        case _:
-            pass
-    return moves, capture_moves
+    return f"{current_piece[2]}{target_square}"

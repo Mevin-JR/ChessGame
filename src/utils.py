@@ -4,7 +4,9 @@ from typing import overload
 
 # Constants
 GRAY = (50, 50, 50)
+DARK_GRAY = (90, 90, 90)
 WHITE = (255, 255, 255)
+RED = (255, 0, 0)
 
 FPS = 60
 
@@ -56,14 +58,49 @@ def get_square(arg):
     else:
         raise ValueError("Argument must be a tuple or a string")
 
-def square_contains_piece(square: str) -> bool: # Checks if specified square holds a piece
-    square_rect = get_square(square)
-    if square_rect is None:
+@overload
+def get_piece_name(mouse_pos: tuple) -> str | None:
+    ...
+
+@overload
+def get_piece_name(square: str) -> str | None:
+    ...
+
+def get_piece_name(arg):
+    if isinstance(arg, tuple):
+        if arg is not None:
+            for piece_name, piece in chess_pieces_dict.items():
+                if piece.rect.collidepoint(arg):
+                    return piece_name
+        return None
+    elif isinstance(arg, str):
+        if square_rects_dict.get(arg) is not None:
+            square_center = get_square_center(arg)
+            return get_piece_name(square_center)
+
+@overload
+def square_contains_piece(square_pos: tuple) -> bool:
+    ...
+
+@overload
+def square_contains_piece(square_coord: str) -> bool:
+    ...
+
+def square_contains_piece(arg): # Checks if specified square holds a piece
+    if isinstance(arg, tuple):
+        square_rect = get_square(arg)[1]
+        if square_rect is not None:
+            for piece in chess_pieces_dict.values():
+                if piece.rect.collidepoint(square_rect.center):
+                    return True
         return False
-    for piece in chess_pieces_dict.values():
-        if piece.rect.collidepoint(square_rect.center):
-            return True
-    return False
+    elif isinstance(arg, str):
+        square_rect = get_square(arg)
+        if square_rect is not None:
+            for piece in chess_pieces_dict.values():
+                if piece.rect.collidepoint(square_rect.center):
+                    return True
+        return False
 
 def get_square_center(square: str) -> tuple:
     rect: pygame.Rect = square_rects_dict.get(square, None)
@@ -71,17 +108,24 @@ def get_square_center(square: str) -> tuple:
         return rect.center # Position values of square center
     return None
 
-def get_piece(mouse_pos: tuple) -> tuple[bool, str]:
+def select_piece(mouse_pos: tuple) -> tuple[bool, str]:
     for piece_name, piece in chess_pieces_dict.items():
         if piece.rect.collidepoint(mouse_pos):
-            print("Selected: %s [%s]" % (piece_name, get_square(piece.rect.center)[0])) # DEBUG
             return True, piece_name
     return False, None
 
-def friendly_piece(piece_name: str, target_name: str) -> bool: # Check if piece is friendly
-    if target_name is None:
+def friendly_piece(current_square: str, target_square: str) -> bool: # Check if piece is friendly
+    current_piece = get_piece_name(current_square)
+    target_piece = get_piece_name(target_square)
+    if target_piece is None:
         return False
-    return piece_name[0] == target_name[0]
+    return current_piece[0] == target_piece[0] # TODO: Fix this abomination
 
 def is_white(piece_name: str) -> bool: # Checks if piece is white
     return piece_name[0] == "w"
+
+def has_moved(piece_name: str, current_square: str) -> bool:
+    if is_white(piece_name):
+        return WHITE_START_POSITIONS.get(piece_name) != current_square
+    else:
+        return BLACK_START_POSITIONS.get(piece_name) != current_square 
