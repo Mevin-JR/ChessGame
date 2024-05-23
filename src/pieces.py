@@ -1,5 +1,6 @@
 from utils import *
 
+# Abstract piece class
 class Piece:
     def __init__(self, piece_name: str, current_pos: tuple, dest_pos: tuple = None) -> None:
         self.piece_name = piece_name
@@ -14,7 +15,6 @@ class Piece:
 class Pawn(Piece):
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
-        dest_square = get_square(self.dest_pos)[0] if self.dest_pos is not None else None
         starting_rank = int(current_square[1])
 
         direction = 1 if is_white(self.piece_name) else -1
@@ -66,7 +66,6 @@ class Pawn(Piece):
 class Rook(Piece):
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
-        dest_square = get_square(self.dest_pos)[0] if self.dest_pos is not None else None
 
         file = current_square[0]
         starting_file = ord(current_square[0])

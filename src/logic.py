@@ -13,7 +13,6 @@ ILLEGAL_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "ille
 def remove_piece(piece_name: str) -> None: # Remove piece from board
     all_pieces_group.remove(chess_pieces_dict.get(piece_name)) # Remeving from group
     del chess_pieces_dict[piece_name] # Removing piece from dictionary
-    print("Removed: ", chess_pieces_dict.get(piece_name)) # DEBUG
 
 def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple) -> None: # Handle piece capture
     remove_piece(target)
@@ -65,5 +64,6 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     else:
         occupied_piece = get_piece_name(target_square_center)
         capture_piece(piece_rect, occupied_piece, target_square_center)
+        print("Removed: ", occupied_piece) # DEBUG
     
     return f"{current_piece[2]}{target_square}"
