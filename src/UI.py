@@ -3,7 +3,7 @@ import os
 
 from utils import *
 
-class Pieces(pygame.sprite.Sprite): # Sprites class
+class Sprite(pygame.sprite.Sprite): # Sprites class
     def __init__(self, image, pos):
         super().__init__()
         self.image = image
@@ -88,17 +88,17 @@ class UI: # User Interface class
     def initialize_pieces(self) -> pygame.sprite.Group: # Rendering pieces on chess board
         chess_pieces_dict.clear()
 
-        # White Pieces
+        # White Sprite
         self.load_white_pieces()
         for piece, square in WHITE_START_POSITIONS.items():
-            piece_obj = Pieces(self.white_pieces_surface.get(piece[:-1]), get_square_center(square))
+            piece_obj = Sprite(self.white_pieces_surface.get(piece[:-1]), get_square_center(square))
             chess_pieces_dict[piece] = piece_obj
             all_pieces_group.add(piece_obj) # Add piece in group
 
-        # Black Pieces
+        # Black Sprite
         self.load_black_pieces()
         for piece, square in BLACK_START_POSITIONS.items():
-            piece_obj = Pieces(self.black_pieces_surface.get(piece[:-1]), get_square_center(square))
+            piece_obj = Sprite(self.black_pieces_surface.get(piece[:-1]), get_square_center(square))
             chess_pieces_dict[piece] = piece_obj
             all_pieces_group.add(piece_obj) # Add piece in group
 

@@ -25,7 +25,7 @@ chess_board, square_rects = ui.chess_board()
 all_pieces = ui.initialize_pieces()
 
 # Variable initialization
-selected_piece: UI.Pieces = None
+selected_piece: UI.Sprite = None
 selected_piece_name: str = None
 allowed_moves = {}
 played_moves = []
@@ -110,7 +110,7 @@ def main(): # Main function/loop
                         if move is not None:
                             played_moves.append(move) # Record move
                         selected = False
-                        selected_piece = None
+                        selected_piece = None # Reset selection
                 else:
                     selected, piece_name = select_piece(mouse_pos) # Select piece
                     selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
