@@ -32,9 +32,10 @@ def piece_can_move(piece_name: str, dest: tuple) -> bool: # Check if piece can m
     piece: Piece = piece_obj(piece_name, piece_rect.center, dest)
 
     moves = piece.get_allowed_moves()
-    for move_list in moves.values():
-        if dest_square in move_list:
-            return True
+    if moves:
+        for move_list in moves.values():
+            if dest_square in move_list:
+                return True
     return False
 
 def get_allowed_moves(piece_name: str, current_pos: tuple) -> dict: # Return available moves by the piece (move and captures)

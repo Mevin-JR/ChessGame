@@ -114,9 +114,85 @@ class Rook(Piece):
             self.moves["capture"] = self.capture_moves
 
         return self.moves
+    
+class Bishop(Piece):
+    def get_allowed_moves(self) -> dict:
+        current_square = get_square(self.current_pos)[0]
+
+        file = ord(current_square[0])
+        rank = int(current_square[1])
+
+        temp_file = file
+        temp_rank = rank
+        
+        moves_list = []
+        for i in range(1, 8):
+            temp_file, temp_rank = temp_file + 1, temp_rank + 1
+            if temp_file > 104 or temp_rank > 8:
+                break
+            right_up_coord = f"{chr(temp_file)}{temp_rank}"
+            obstructed = add_move(current_square, right_up_coord, moves_list, self.capture_moves)
+            if obstructed:
+                break
+        
+        temp_file = file
+        temp_rank = rank
+
+        for i in range(1, 8):
+            temp_file, temp_rank = temp_file - 1, temp_rank - 1
+            if temp_file < 97 or temp_rank < 1:
+                break
+            left_down_coord = f"{chr(temp_file)}{temp_rank}"
+            obstructed = add_move(current_square, left_down_coord, moves_list, self.capture_moves)
+            if obstructed:
+                break
+        
+        temp_file = file
+        temp_rank = rank
+
+        for i in range(1, 8):
+            temp_file, temp_rank = temp_file - 1, temp_rank + 1
+            if temp_file < 97 or temp_rank > 8:
+                break
+            left_up_coord = f"{chr(temp_file)}{temp_rank}"
+            obstructed = add_move(current_square, left_up_coord, moves_list, self.capture_moves)
+            if obstructed:
+                break
+        
+        temp_file = file
+        temp_rank = rank
+
+        for i in range(1, 8):
+            temp_file, temp_rank = temp_file + 1, temp_rank - 1
+            if temp_file > 104 or temp_rank < 1:
+                break
+            right_down_coord = f"{chr(temp_file)}{temp_rank}"
+            obstructed = add_move(current_square, right_down_coord, moves_list, self.capture_moves)
+            if obstructed:
+                break
+
+        self.moves["moves"] = moves_list
+        print(moves_list)
+        if self.capture_moves:
+            self.moves["capture"] = self.capture_moves
+
+        return self.moves
+
+def add_move(current_square: str, move: str, move_list: list, capture_moves: list) -> bool:
+    obstructed = False
+    if not square_contains_piece(move):
+        move_list.append(move)
+    else:
+        if not friendly_piece(current_square, move):
+            capture_moves.append(move)
+            obstructed = True
+        else:
+            obstructed = True
+    return obstructed
 
 # Piece class dictionary
 PIECE_CLASS_DICT = {
     "pawn": Pawn,
-    "rook": Rook
+    "rook": Rook,
+    "bishop": Bishop
 }
