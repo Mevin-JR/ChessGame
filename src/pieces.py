@@ -11,188 +11,241 @@ class Piece:
 
     def get_allowed_moves(self) -> dict:
         raise NotImplementedError("This method must be overridden in derived classes")
+    
+# Constants
+ASCII_A = ord('a')
+ASCII_H = ord('h')
+RANK_MIN = 1
+RANK_MAX = 8
+
+# Helper functions
+def can_capture(current_square: str, check_square: str) -> bool:
+    if square_rects_dict.get(check_square) is None:
+        return False
+    if not square_contains_piece(check_square):
+        return False
+    if friendly_piece(current_square, check_square):
+        return False
+    return True
+
 
 class Pawn(Piece):
+
+    """
+    Calculate and return possible moves for the pawn piece
+
+    Move Type:
+        - 2 squares forward (if pawn not moved)
+        - 1 square forward
+    
+    Captures:
+        - Left forward diagonal (1 square)
+        - Right forward diagonal (1 square)
+    """
+
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
-        starting_rank = int(current_square[1])
+        file = ord(current_square[0])
+        rank = int(current_square[1])
+        rank_gap = 1 if is_white(self.piece_name) else -1
+        moves_list = []
 
-        direction = 1 if is_white(self.piece_name) else -1
-
+        # Vertical movement
         if has_moved(self.piece_name, current_square):
-            next_square_rank = starting_rank + direction
-            next_square_coord = f"{current_square[0]}{next_square_rank}"
-
-            if square_rects_dict.get(next_square_coord) is not None and not square_contains_piece(next_square_coord):
-                self.moves["moves"] = [next_square_coord]
-
+            next_square_rank = rank + rank_gap
+            if RANK_MIN <= next_square_rank <= RANK_MAX:
+                next_square_coord = f"{current_square[0]}{next_square_rank}"
+                if not square_contains_piece(next_square_coord):
+                    moves_list.append(next_square_coord)
         else:
-            forward_moves = []
-            direction_2 = direction
+            start_rank_gap = rank_gap
 
             for i in range(2):
-                next_square_rank = starting_rank + direction_2
-                next_square_coord = f"{current_square[0]}{next_square_rank}"
+                next_square_rank = rank + start_rank_gap
+                if RANK_MIN <= next_square_rank <= RANK_MAX:
+                    next_square_coord = f"{current_square[0]}{next_square_rank}"
+                    
+                    # If pawn is obstructed stop looking for next square 
+                    if i == 0 and square_contains_piece(next_square_coord):
+                        break
 
-                if i == 0 and square_contains_piece(next_square_coord):
-                    forward_moves = []
-                    break
-
-                if square_rects_dict.get(next_square_coord) is not None and not square_contains_piece(next_square_coord):
-                    forward_moves.append(next_square_coord)
+                    if not square_contains_piece(next_square_coord):
+                        moves_list.append(next_square_coord)
                 
-                direction_2 = direction_2 + 1 if is_white(self.piece_name) else direction_2 - 1
+                    start_rank_gap = start_rank_gap + rank_gap
 
-            if forward_moves:
-                self.moves["moves"] = forward_moves
+        # Possible captures in diagonals
+        left_diagonal = f"{chr(file - 1)}{rank + rank_gap}"
+        right_diagonal = f"{chr(file + 1)}{rank + rank_gap}"
 
-        capture_moves = self.get_capture_moves(current_square, direction)
-        if capture_moves:
-            self.moves["capture"] = [move for move in capture_moves]
+        if can_capture(current_square, left_diagonal):
+            self.capture_moves.append(left_diagonal)
+        if can_capture(current_square, right_diagonal):
+            self.capture_moves.append(right_diagonal)  
+        
+        if moves_list:
+            self.moves["moves"] = moves_list
+        if self.capture_moves:
+            self.moves["capture"] = self.capture_moves
         
         return self.moves
 
-    def get_capture_moves(self, current_square: str, direction: int) -> list:
-        left_diagonal = f"{chr(ord(current_square[0]) - 1)}{int(current_square[1]) + direction}"
-        right_diagonal = f"{chr(ord(current_square[0]) + 1)}{int(current_square[1]) + direction}"
-
-        if square_rects_dict.get(left_diagonal) is not None and square_contains_piece(left_diagonal) and not friendly_piece(current_square, left_diagonal):
-            self.capture_moves.append(left_diagonal)
-        if square_rects_dict.get(right_diagonal) is not None and square_contains_piece(right_diagonal) and not friendly_piece(current_square, right_diagonal):
-            self.capture_moves.append(right_diagonal)    
-            
-        return self.capture_moves
-
 class Rook(Piece):
+
+    """
+    Calculate and return possible moves for the rook piece
+
+    Move Type:
+        - Vertical (Linear)
+        - Horizontal (Linear)
+
+    Captures: Along its path
+    """
+
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
-
-        file = current_square[0]
-        starting_file = ord(current_square[0])
+        file = ord(current_square[0])
         rank = int(current_square[1])
-        starting_rank = int(current_square[1])
-
         moves_list = []
-        for square_rank in range(starting_rank + 1, 9):
-            next_coord = f"{file}{square_rank}"
-            if not square_contains_piece(next_coord):
-                moves_list.append(next_coord)
-            else:
-                if not friendly_piece(current_square, next_coord):
-                    self.capture_moves.append(next_coord)
-                break
-        
-        for square_rank in range(starting_rank - 1, 0, -1):
-            next_coord = f"{file}{square_rank}"
-            if not square_contains_piece(next_coord):
-                moves_list.append(next_coord)
-            else:
-                if not friendly_piece(current_square, next_coord):
-                    self.capture_moves.append(next_coord)
-                break
 
-        for file_unicode in range(starting_file + 1, 105, 1):
-            next_coord = f"{chr(file_unicode)}{rank}"
-            if not square_contains_piece(next_coord):
-                moves_list.append(next_coord)
-            else:
-                if not friendly_piece(current_square, next_coord):
-                    self.capture_moves.append(next_coord)
+        # Vertical (up)
+        for rank_up in range(rank + 1, RANK_MAX + 1):
+            next_coord = f"{chr(file)}{rank_up}"
+            if square_rects_dict.get(next_coord) is None:
                 break
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
+                break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
         
-        for file_unicode in range(starting_file - 1, 96, -1):
-            next_coord = f"{chr(file_unicode)}{rank}"
-            if not square_contains_piece(next_coord):
-                moves_list.append(next_coord)
-            else: 
-                if not friendly_piece(current_square, next_coord):
-                    self.capture_moves.append(next_coord)
+        # Vertical (down)
+        for rank_down in range(rank - 1, RANK_MIN - 1, -1):
+            next_coord = f"{chr(file)}{rank_down}"
+            if square_rects_dict.get(next_coord) is None:
                 break
-                
-        self.moves["moves"] = moves_list
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
+                break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
+        
+        # Horizontal (right)
+        for file_right in range(file + 1, ASCII_H + 1, 1):
+            next_coord = f"{chr(file_right)}{rank}"
+            if square_rects_dict.get(next_coord) is None:
+                break
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
+                break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
+        
+        # Horizontal (left)
+        for file_left in range(file - 1, ASCII_A - 1, -1):
+            next_coord = f"{chr(file_left)}{rank}"
+            if square_rects_dict.get(next_coord) is None:
+                break
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
+                break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
+        
+        if moves_list:
+            self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["capture"] = self.capture_moves
 
         return self.moves
     
 class Bishop(Piece):
+
+    """
+    Calculate and return possible moves for the bishop piece
+
+    Move Type:
+        - Diagonal (All sides)
+    
+    Captures: Along its path
+    """
+
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
-
         file = ord(current_square[0])
         rank = int(current_square[1])
-
-        temp_file = file
-        temp_rank = rank
-        
         moves_list = []
-        for i in range(1, 8):
-            temp_file, temp_rank = temp_file + 1, temp_rank + 1
-            if temp_file > 104 or temp_rank > 8:
+
+        # Right Diagonal (up)
+        file_step = 0
+        for rank_up in range(rank + 1, RANK_MAX + 1):
+            file_step += 1
+            next_coord = f"{chr(file + file_step)}{rank_up}"
+            if square_rects_dict.get(next_coord) is None:
                 break
-            right_up_coord = f"{chr(temp_file)}{temp_rank}"
-            obstructed = add_move(current_square, right_up_coord, moves_list, self.capture_moves)
-            if obstructed:
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
                 break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
+
+        # Right Diagonal (down)
+        file_step = 0
+        for rank_down in range(rank - 1, RANK_MIN - 1, -1):
+            file_step += 1
+            next_coord = f"{chr(file + file_step)}{rank_down}"
+            if square_rects_dict.get(next_coord) is None:
+                break
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
+                break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
         
-        temp_file = file
-        temp_rank = rank
+        # Left Diagonal (up)
+        file_step = 0
+        for rank_up in range(rank + 1, RANK_MAX + 1):
+            file_step -= 1
+            next_coord = f"{chr(file + file_step)}{rank_up}"
+            if square_rects_dict.get(next_coord) is None:
+                break
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
+                break
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
 
-        for i in range(1, 8):
-            temp_file, temp_rank = temp_file - 1, temp_rank - 1
-            if temp_file < 97 or temp_rank < 1:
+        # Left Diagonal (down)
+        file_step = 0
+        for rank_down in range(rank - 1, RANK_MIN - 1, -1):
+            file_step -= 1
+            next_coord = f"{chr(file + file_step)}{rank_down}"
+            if square_rects_dict.get(next_coord) is None:
                 break
-            left_down_coord = f"{chr(temp_file)}{temp_rank}"
-            obstructed = add_move(current_square, left_down_coord, moves_list, self.capture_moves)
-            if obstructed:
+            if can_capture(current_square, next_coord):
+                self.capture_moves.append(next_coord)
                 break
-        
-        temp_file = file
-        temp_rank = rank
+            if square_contains_piece(next_coord):
+                break
+            moves_list.append(next_coord)
 
-        for i in range(1, 8):
-            temp_file, temp_rank = temp_file - 1, temp_rank + 1
-            if temp_file < 97 or temp_rank > 8:
-                break
-            left_up_coord = f"{chr(temp_file)}{temp_rank}"
-            obstructed = add_move(current_square, left_up_coord, moves_list, self.capture_moves)
-            if obstructed:
-                break
-        
-        temp_file = file
-        temp_rank = rank
-
-        for i in range(1, 8):
-            temp_file, temp_rank = temp_file + 1, temp_rank - 1
-            if temp_file > 104 or temp_rank < 1:
-                break
-            right_down_coord = f"{chr(temp_file)}{temp_rank}"
-            obstructed = add_move(current_square, right_down_coord, moves_list, self.capture_moves)
-            if obstructed:
-                break
-
-        self.moves["moves"] = moves_list
-        print(moves_list)
+        if moves_list:
+            self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["capture"] = self.capture_moves
 
         return self.moves
 
-def add_move(current_square: str, move: str, move_list: list, capture_moves: list) -> bool:
-    obstructed = False
-    if not square_contains_piece(move):
-        move_list.append(move)
-    else:
-        if not friendly_piece(current_square, move):
-            capture_moves.append(move)
-            obstructed = True
-        else:
-            obstructed = True
-    return obstructed
-
 # Piece class dictionary
 PIECE_CLASS_DICT = {
     "pawn": Pawn,
     "rook": Rook,
-    "bishop": Bishop
+    "bishop": Bishop,
 }
