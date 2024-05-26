@@ -256,9 +256,27 @@ class Bishop(Piece):
 
         return self.moves
 
+class Queen(Piece):
+    def get_allowed_moves(self) -> dict:
+        current_square = get_square(self.current_pos)[0]
+
+        linear_moves, linear_captures = linear_movement(current_square)
+        diagonal_moves, diagonal_captures = diagonal_movement(current_square)
+
+        moves_list = linear_moves + diagonal_moves
+        self.capture_moves = linear_captures + diagonal_captures
+
+        if moves_list:
+            self.moves["moves"] = moves_list
+        if self.capture_moves:
+            self.moves["capture"] = self.capture_moves
+
+        return self.moves
+
 # Piece class dictionary
 PIECE_CLASS_DICT = {
     "pawn": Pawn,
     "rook": Rook,
     "bishop": Bishop,
+    "queen": Queen,
 }
