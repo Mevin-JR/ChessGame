@@ -257,6 +257,17 @@ class Bishop(Piece):
         return self.moves
 
 class Queen(Piece):
+
+    """
+    Calculate and return possible moves for the queen piece
+
+    Move Type:
+        - Linear (Vertical & Horizontal)
+        - Diagonal (All sides)
+    
+    Captures: Along its path
+    """
+    
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
 
@@ -273,10 +284,58 @@ class Queen(Piece):
 
         return self.moves
 
+class King(Piece):
+
+    """
+    Calculate and return possible moves for the king piece
+
+    Move Type:
+        - One square (In all direction)
+    
+    Captures: Along its path
+    """
+
+    def get_allowed_moves(self) -> dict:
+        current_square = get_square(self.current_pos)[0]
+        file = ord(current_square[0])
+        rank = int(current_square[1])
+        moves_list = []
+
+        directions = {
+        "left_up": (file - 1, rank + 1),
+        "left": (file - 1, rank),
+        "left_down": (file - 1, rank - 1),
+        "up": (file, rank + 1),
+        "down": (file, rank - 1),
+        "right_up": (file + 1, rank + 1),
+        "right": (file + 1, rank),
+        "right_down": (file + 1, rank - 1)
+        }
+
+        for (df, dr) in directions.values():
+            if ASCII_A <= df <= ASCII_H and RANK_MIN <= dr <= RANK_MAX:
+                next_coord = f"{chr(df)}{dr}"
+                if square_rects_dict.get(next_coord) is None:
+                    continue
+                if can_capture(current_square, next_coord):
+                    self.capture_moves.append(next_coord)
+                else:
+                    if square_contains_piece(next_coord):
+                        continue
+                    moves_list.append(next_coord)
+
+        if moves_list:
+            self.moves["moves"] = moves_list
+        if self.capture_moves:
+            self.moves["capture"] = self.capture_moves
+        
+        return self.moves
+
 # Piece class dictionary
 PIECE_CLASS_DICT = {
     "pawn": Pawn,
     "rook": Rook,
     "bishop": Bishop,
     "queen": Queen,
+    "king": King,
 }
