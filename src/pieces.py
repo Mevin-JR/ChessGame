@@ -256,6 +256,54 @@ class Bishop(Piece):
 
         return self.moves
 
+class Knight(Piece):
+
+    """
+    Calculate and return possible moves for the knight piece
+
+    Move Type:
+        - L shaped movement (All sides)
+    
+    Captures: Along its path
+    """
+
+    def get_allowed_moves(self) -> dict:
+        current_square = get_square(self.current_pos)[0]
+        file = ord(current_square[0])
+        rank = int(current_square[1])
+        moves_list = []
+
+        # Possible knight movement
+        directions = {
+            "forward_left": (file - 1, rank + 2),
+            "forward_right": (file + 1, rank + 2),
+            "right_up": (file + 2, rank + 1),
+            "right_down": (file + 2, rank - 1),
+            "downward_left": (file - 1, rank - 2),
+            "downward_right": (file + 1, rank - 2),
+            "left_up": (file - 2, rank + 1),
+            "left_down": (file - 2, rank - 1),
+        }
+
+        for (df, dr) in directions.values():
+            if ASCII_A <= df <= ASCII_H and RANK_MIN <= dr <= RANK_MAX:
+                next_coord = f"{chr(df)}{dr}"
+                if square_rects_dict.get(next_coord) is None:
+                    continue
+                if can_capture(current_square, next_coord):
+                    self.capture_moves.append(next_coord)
+                else:
+                    if square_contains_piece(next_coord):
+                        continue
+                    moves_list.append(next_coord)
+
+        if moves_list:
+            self.moves["moves"] = moves_list
+        if self.capture_moves:
+            self.moves["capture"] = self.capture_moves
+
+        return self.moves
+
 class Queen(Piece):
 
     """
@@ -301,6 +349,7 @@ class King(Piece):
         rank = int(current_square[1])
         moves_list = []
 
+        # Possible king movement
         directions = {
         "left_up": (file - 1, rank + 1),
         "left": (file - 1, rank),
@@ -336,6 +385,7 @@ PIECE_CLASS_DICT = {
     "pawn": Pawn,
     "rook": Rook,
     "bishop": Bishop,
+    "knight": Knight,
     "queen": Queen,
     "king": King,
 }
