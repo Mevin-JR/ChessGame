@@ -148,6 +148,7 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
     
     return moves_list, capture_list
 
+# Piece objects
 class Pawn(Piece):
 
     """
@@ -166,36 +167,32 @@ class Pawn(Piece):
         current_square = get_square(self.current_pos)[0]
         file = ord(current_square[0])
         rank = int(current_square[1])
-        rank_gap = 1 if is_white(self.piece_name) else -1
+        obstructed = False
         moves_list = []
 
         # Vertical movement
-        if has_moved(self.piece_name, current_square):
-            next_square_rank = rank + rank_gap
+        rank_gap1 = 1 if is_white(self.piece_name) else -1
+        next_square_rank = rank + rank_gap1
+        if RANK_MIN <= next_square_rank <= RANK_MAX:
+            next_square_coord = f"{current_square[0]}{next_square_rank}"
+            if not square_contains_piece(next_square_coord):
+                moves_list.append(next_square_coord)
+            else:
+                obstructed = True
+
+        if not has_moved(self.piece_name, current_square):
+            rank_gap2 = 2 if is_white(self.piece_name) else -2
+            next_square_rank = rank + rank_gap2
             if RANK_MIN <= next_square_rank <= RANK_MAX:
                 next_square_coord = f"{current_square[0]}{next_square_rank}"
-                if not square_contains_piece(next_square_coord):
-                    moves_list.append(next_square_coord)
-        else:
-            start_rank_gap = rank_gap
-
-            for i in range(2):
-                next_square_rank = rank + start_rank_gap
-                if RANK_MIN <= next_square_rank <= RANK_MAX:
-                    next_square_coord = f"{current_square[0]}{next_square_rank}"
-                    
-                    # If pawn is obstructed stop looking for next square 
-                    if i == 0 and square_contains_piece(next_square_coord):
-                        break
-
-                    if not square_contains_piece(next_square_coord):
-                        moves_list.append(next_square_coord)
                 
-                    start_rank_gap = start_rank_gap + rank_gap
-
+                # If first square is obstructed
+                if not obstructed and not square_contains_piece(next_square_coord):
+                    moves_list.append(next_square_coord)
+            
         # Possible captures in diagonals
-        left_diagonal = f"{chr(file - 1)}{rank + rank_gap}"
-        right_diagonal = f"{chr(file + 1)}{rank + rank_gap}"
+        left_diagonal = f"{chr(file - 1)}{rank + rank_gap1}"
+        right_diagonal = f"{chr(file + 1)}{rank + rank_gap1}"
 
         if can_capture(current_square, left_diagonal):
             self.capture_moves.append(left_diagonal)
@@ -205,8 +202,14 @@ class Pawn(Piece):
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
-            self.moves["capture"] = self.capture_moves
-        
+            self.moves["captures"] = self.capture_moves
+
+        # Promotion check
+        if is_white(self.piece_name) and rank == RANK_MAX - 1 and (moves_list or self.capture_moves):
+            self.moves["promotions"] = [f"{chr(file)}{RANK_MAX}"]
+        elif not is_white(self.piece_name) and rank == RANK_MIN + 1 and (moves_list or self.capture_moves):
+            self.moves["promotions"] = [f"{chr(file)}{RANK_MIN}"]
+                    
         return self.moves
 
 class Rook(Piece):
@@ -229,7 +232,7 @@ class Rook(Piece):
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
-            self.moves["capture"] = self.capture_moves
+            self.moves["captures"] = self.capture_moves
 
         return self.moves
 
@@ -252,7 +255,7 @@ class Bishop(Piece):
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
-            self.moves["capture"] = self.capture_moves
+            self.moves["captures"] = self.capture_moves
 
         return self.moves
 
@@ -300,7 +303,7 @@ class Knight(Piece):
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
-            self.moves["capture"] = self.capture_moves
+            self.moves["captures"] = self.capture_moves
 
         return self.moves
 
@@ -328,7 +331,7 @@ class Queen(Piece):
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
-            self.moves["capture"] = self.capture_moves
+            self.moves["captures"] = self.capture_moves
 
         return self.moves
 
@@ -376,7 +379,7 @@ class King(Piece):
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
-            self.moves["capture"] = self.capture_moves
+            self.moves["captures"] = self.capture_moves
         
         return self.moves
 
@@ -387,5 +390,5 @@ PIECE_CLASS_DICT = {
     "bishop": Bishop,
     "knight": Knight,
     "queen": Queen,
-    "king": King,
+    "king": King
 }

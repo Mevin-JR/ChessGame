@@ -34,11 +34,14 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
         return
     
     moves = allowed_moves.get("moves", [])
-    captures = allowed_moves.get("capture", [])
+    captures = allowed_moves.get("captures", [])
+    promotions = allowed_moves.get("promotions", [])
     
     if moves:
         for square in moves:
-            square_rect = square_rects_dict.get(square)
+            if square in promotions:
+                continue
+            square_rect: pygame.Rect = square_rects_dict.get(square)
             pygame.draw.circle(WINDOW, DARK_GRAY, square_rect.center, 10) # Highlight available moves
     
     if captures:
@@ -46,8 +49,14 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
         capture_highlight_surface.fill(RED)
         capture_highlight_surface.set_alpha(90)
         for capture_square in captures:
-            capture_square_rect = square_rects_dict.get(capture_square)
+            capture_square_rect: pygame.Rect = square_rects_dict.get(capture_square)
             WINDOW.blit(capture_highlight_surface, capture_square_rect.topleft) # Highlight capture moves
+    
+    if promotions:
+        for square in promotions:
+            square_rect: pygame.Rect = square_rects.get(square)
+            pygame.draw.line(WINDOW, DARK_GRAY, (square_rect.centerx - 10, square_rect.centery), (square_rect.centerx + 10, square_rect.centery), 5)
+            pygame.draw.line(WINDOW, DARK_GRAY, (square_rect.centerx, square_rect.centery - 10), (square_rect.centerx, square_rect.centery + 10), 5)
 
 def piece_highlight() -> None: # Highlight selection of piece
     if selected_piece is not None:
