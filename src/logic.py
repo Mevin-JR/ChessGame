@@ -3,12 +3,33 @@ import os
 
 from utils import *
 from pieces import *
+from UI import *
 
 # Sound fx's
 pygame.mixer.init()
 PIECE_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_move.wav"))
 PIECE_CAPTURE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_capture.wav"))
 ILLEGAL_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "illegal_move.wav"))
+PAWN_PROMOTION_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "pawn_promotion.wav"))
+
+queen_count = 1
+
+def add_queen(piece_name: str, pos: tuple) -> None:
+    global queen_count
+    if is_white(piece_name):
+        piece_name_updated = "w_queen"
+        piece_obj = Sprite(white_pieces_surface.get(piece_name_updated), pos)
+        all_pieces_group.add(piece_obj)
+        piece_name_count = f"{piece_name_updated}{queen_count}"
+        queen_count += 1
+        chess_pieces_dict[piece_name_count] = piece_obj
+    else:
+        piece_name_updated = "b_queen"
+        piece_obj = Sprite(black_pieces_surface.get(piece_name_updated), pos)
+        all_pieces_group.add(piece_obj)
+        piece_name_count = f"{piece_name_updated}{queen_count}"
+        queen_count += 1
+        chess_pieces_dict[piece_name_count] = piece_obj
 
 def remove_piece(piece_name: str) -> None: # Remove piece from board
     all_pieces_group.remove(chess_pieces_dict.get(piece_name)) # Remeving from group
@@ -45,6 +66,18 @@ def get_allowed_moves(piece_name: str, current_pos: tuple) -> dict: # Return ava
     moves = piece.get_allowed_moves()
     return moves
 
+def can_promote(piece_name: str, current_pos: tuple):
+    moves = get_allowed_moves(piece_name, current_pos)
+    promotions = moves.get("promotions", [])
+    if promotions:
+        return True
+    return False
+
+def promote(piece_name: str, target_square: tuple):
+    remove_piece(piece_name)
+    add_queen(piece_name, target_square)
+    PAWN_PROMOTION_SOUND.play()
+
 def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     piece_sprite = chess_pieces_dict.get(current_piece)
     piece_rect: pygame.Rect = piece_sprite.get_rect()
@@ -58,6 +91,15 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
         ILLEGAL_MOVE_SOUND.play()
         return
     
+    # Special movement cases
+    if can_promote(current_piece, piece_rect.center):
+        if isOccupied:
+            occupied_piece = get_piece_name(target_square_center)
+            capture_piece(piece_rect, occupied_piece, target_square_center)
+        promote(current_piece, target_square_center)
+        return f"Promotion: {current_piece[2]}{target_square}"
+
+    # Move or capture
     if not isOccupied:
         piece_rect.center = target_square_center
         PIECE_MOVE_SOUND.play()

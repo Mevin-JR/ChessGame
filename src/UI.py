@@ -12,14 +12,15 @@ class Sprite(pygame.sprite.Sprite): # Sprites class
     def get_rect(self) -> pygame.Rect:
         return self.rect
 
+white_pieces_surface = {}
+black_pieces_surface = {}
+
 class UI: # User Interface class
     def __init__(self) -> None:
         # Instance varaible initialization
-        self.white_pieces_surface = {}
-        self.black_pieces_surface = {}
         self.board_surface = pygame.Surface(
             (8 * SQUARE_SIZE + 50, 8 * SQUARE_SIZE + 50)) # Chess board (whole)
-    
+
     def chess_board(self) -> tuple[pygame.Surface, dict]:
         square_rects_dict.clear() # Reset rects dictionary
         self.board_surface.fill(GRAY)
@@ -77,28 +78,28 @@ class UI: # User Interface class
         white_pieces_png = [png for png in PIECE_FILES if "w_" in png]
         for piece in white_pieces_png:
             piece_name = piece[:-4]
-            self.white_pieces_surface[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
+            white_pieces_surface[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
 
     def load_black_pieces(self) -> None: # Loading image (Surface) of black pieces
         black_pieces_png = [png for png in PIECE_FILES if "b_" in png]
         for piece in black_pieces_png:
             piece_name = piece[:-4]
-            self.black_pieces_surface[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
-    
+            black_pieces_surface[piece_name] = pygame.image.load(os.path.join("assets", "chess_pieces", piece)).convert_alpha()
+
     def initialize_pieces(self) -> pygame.sprite.Group: # Rendering pieces on chess board
         chess_pieces_dict.clear()
 
         # White Sprite
         self.load_white_pieces()
         for piece, square in WHITE_START_POSITIONS.items():
-            piece_obj = Sprite(self.white_pieces_surface.get(piece[:-1]), get_square_center(square))
+            piece_obj = Sprite(white_pieces_surface.get(piece[:-1]), get_square_center(square))
             chess_pieces_dict[piece] = piece_obj
             all_pieces_group.add(piece_obj) # Add piece in group
 
         # Black Sprite
         self.load_black_pieces()
         for piece, square in BLACK_START_POSITIONS.items():
-            piece_obj = Sprite(self.black_pieces_surface.get(piece[:-1]), get_square_center(square))
+            piece_obj = Sprite(black_pieces_surface.get(piece[:-1]), get_square_center(square))
             chess_pieces_dict[piece] = piece_obj
             all_pieces_group.add(piece_obj) # Add piece in group
 
