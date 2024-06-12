@@ -19,27 +19,38 @@ RANK_MIN = 1
 RANK_MAX = 8
 
 # Helper functions
-def can_capture(current_square: str, check_square: str) -> bool:
+def can_capture(current_square: str, check_square: str) -> tuple[bool, str | None]:
     if square_rects_dict.get(check_square) is None:
-        return False
+        return False, None
     if not square_contains_piece(check_square):
-        return False
+        return False, None
     if friendly_piece(current_square, check_square):
-        return False
-    return True
+        return False, None
+    
+    # Check for king
+    piece_name = get_piece_name(check_square)
 
-def linear_movement(current_square: str) -> tuple[list, list]:
+    if "king" in piece_name:
+        return True, check_square
+    return True, None
+
+def linear_movement(current_square: str) -> tuple[list, list, list]:
     file = ord(current_square[0])
     rank = int(current_square[1])
     moves_list = []
     capture_list = []
+    check_list = []
 
     # Vertical (up)
     for rank_up in range(rank + 1, RANK_MAX + 1):
         next_coord = f"{chr(file)}{rank_up}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
@@ -51,7 +62,11 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file)}{rank_down}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
@@ -63,7 +78,11 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file_right)}{rank}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
@@ -75,20 +94,25 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file_left)}{rank}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
             break
         moves_list.append(next_coord)
     
-    return moves_list, capture_list
+    return moves_list, capture_list, check_list
 
-def diagonal_movement(current_square: str) -> tuple[list, list]:
+def diagonal_movement(current_square: str) -> tuple[list, list, list]:
     file = ord(current_square[0])
     rank = int(current_square[1])
     moves_list = []
     capture_list = []
+    check_list = []
 
     # Right Diagonal (up)
     file_step = 0
@@ -97,7 +121,11 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file + file_step)}{rank_up}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
@@ -111,7 +139,11 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file + file_step)}{rank_down}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
@@ -125,7 +157,11 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file + file_step)}{rank_up}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
@@ -139,14 +175,18 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         next_coord = f"{chr(file + file_step)}{rank_down}"
         if square_rects_dict.get(next_coord) is None:
             break
-        if can_capture(current_square, next_coord):
+        can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+                continue
             capture_list.append(next_coord)
             break
         if square_contains_piece(next_coord):
             break
         moves_list.append(next_coord)
     
-    return moves_list, capture_list
+    return moves_list, capture_list, check_list
 
 # Piece objects
 class Pawn(Piece):
@@ -169,6 +209,7 @@ class Pawn(Piece):
         rank = int(current_square[1])
         obstructed = False
         moves_list = []
+        check_list = []
 
         # Vertical movement
         rank_gap1 = 1 if is_white(self.piece_name) else -1
@@ -194,15 +235,25 @@ class Pawn(Piece):
         left_diagonal = f"{chr(file - 1)}{rank + rank_gap1}"
         right_diagonal = f"{chr(file + 1)}{rank + rank_gap1}"
 
-        if can_capture(current_square, left_diagonal):
-            self.capture_moves.append(left_diagonal)
-        if can_capture(current_square, right_diagonal):
-            self.capture_moves.append(right_diagonal)  
+        can_capture_piece, king_in_check = can_capture(current_square, left_diagonal)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+            else:
+                self.capture_moves.append(left_diagonal)
+        can_capture_piece, king_in_check = can_capture(current_square, right_diagonal)
+        if can_capture_piece:
+            if king_in_check is not None:
+                check_list.append(king_in_check)
+            else:
+                self.capture_moves.append(right_diagonal)  
         
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["captures"] = self.capture_moves
+        if check_list:
+            self.moves["check"] = check_list
 
         # Promotion check
         if is_white(self.piece_name) and rank == RANK_MAX - 1 and (moves_list or self.capture_moves):
@@ -227,12 +278,14 @@ class Rook(Piece):
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
         
-        moves_list, self.capture_moves = linear_movement(current_square)
+        moves_list, self.capture_moves, check_list = linear_movement(current_square)
         
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["captures"] = self.capture_moves
+        if check_list:
+            self.moves["check"] = check_list
 
         return self.moves
 
@@ -250,12 +303,14 @@ class Bishop(Piece):
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
         
-        moves_list, self.capture_moves = diagonal_movement(current_square)
+        moves_list, self.capture_moves, check_list = diagonal_movement(current_square)
 
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["captures"] = self.capture_moves
+        if check_list:
+            self.moves["check"] = check_list
 
         return self.moves
 
@@ -275,6 +330,7 @@ class Knight(Piece):
         file = ord(current_square[0])
         rank = int(current_square[1])
         moves_list = []
+        check_list = []
 
         # Possible knight movement
         directions = {
@@ -293,7 +349,11 @@ class Knight(Piece):
                 next_coord = f"{chr(df)}{dr}"
                 if square_rects_dict.get(next_coord) is None:
                     continue
-                if can_capture(current_square, next_coord):
+                can_capture_piece, king_in_check = can_capture(current_square, next_coord)
+                if can_capture_piece:
+                    if king_in_check is not None:
+                        check_list.append(king_in_check)
+                        continue
                     self.capture_moves.append(next_coord)
                 else:
                     if square_contains_piece(next_coord):
@@ -304,6 +364,8 @@ class Knight(Piece):
             self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["captures"] = self.capture_moves
+        if check_list:
+            self.moves["check"] = check_list
 
         return self.moves
 
@@ -322,16 +384,19 @@ class Queen(Piece):
     def get_allowed_moves(self) -> dict:
         current_square = get_square(self.current_pos)[0]
 
-        linear_moves, linear_captures = linear_movement(current_square)
-        diagonal_moves, diagonal_captures = diagonal_movement(current_square)
+        linear_moves, linear_captures, linear_check_list = linear_movement(current_square)
+        diagonal_moves, diagonal_captures, diagonal_check_list = diagonal_movement(current_square)
 
         moves_list = linear_moves + diagonal_moves
         self.capture_moves = linear_captures + diagonal_captures
+        check_list = linear_check_list + diagonal_check_list
 
         if moves_list:
             self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["captures"] = self.capture_moves
+        if check_list:
+            self.moves["check"] = check_list
 
         return self.moves
 
@@ -369,7 +434,7 @@ class King(Piece):
                 next_coord = f"{chr(df)}{dr}"
                 if square_rects_dict.get(next_coord) is None:
                     continue
-                if can_capture(current_square, next_coord):
+                if can_capture(current_square, next_coord)[0]:
                     self.capture_moves.append(next_coord)
                 else:
                     if square_contains_piece(next_coord):

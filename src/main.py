@@ -35,6 +35,7 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
     
     moves = allowed_moves.get("moves", [])
     captures = allowed_moves.get("captures", [])
+    checks = allowed_moves.get("check", [])
     promotions = allowed_moves.get("promotions", [])
     
     if moves:
@@ -52,6 +53,9 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
             capture_square_rect: pygame.Rect = square_rects_dict.get(capture_square)
             WINDOW.blit(capture_highlight_surface, capture_square_rect.topleft) # Highlight capture moves
     
+    if checks:
+        print(checks)
+
     if promotions:
         for square in promotions:
             square_rect: pygame.Rect = square_rects.get(square)
