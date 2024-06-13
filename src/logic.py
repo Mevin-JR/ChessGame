@@ -91,22 +91,21 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
         ILLEGAL_MOVE_SOUND.play()
         return
     
-    # Special movement cases
-    if can_promote(current_piece, piece_rect.center):
-        if isOccupied:
-            occupied_piece = get_piece_name(target_square_center)
-            capture_piece(piece_rect, occupied_piece, target_square_center)
-        promote(current_piece, target_square_center)
-        return f"Promotion: {current_piece[2]}{target_square}"
-
     # Move or capture
     if not isOccupied:
+        if can_promote(current_piece, piece_rect.center):
+            promote(current_piece, target_square_center)
+            return f"Promotion: {current_piece[2]}{target_square}" # DEBUG
         piece_rect.center = target_square_center
         PIECE_MOVE_SOUND.play()
         print("Moved: %s -> %s" % (current_piece, get_square(piece_rect.center)[0])) # DEBUG
     else:
         occupied_piece = get_piece_name(target_square_center)
+        init_piece_rect: pygame.Rect = piece_rect
         capture_piece(piece_rect, occupied_piece, target_square_center)
+        if can_promote(current_piece, init_piece_rect.center):
+            promote(current_piece, target_square_center)
+            return f"Promotion: {current_piece[2]}{target_square}" # DEBUG
         print("Removed: ", occupied_piece) # DEBUG
     
     return f"{current_piece[2]}{target_square}"

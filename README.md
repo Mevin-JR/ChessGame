@@ -4,3 +4,4 @@ TODO:
 - Check for mouse drag (main.py)
 - Work on flipping the board after each turn (main.py)
 - Work on check and checkmate
+- Update allowed moves when a piece moves to new position
