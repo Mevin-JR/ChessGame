@@ -1,3 +1,5 @@
 # Cache Files
-
 /src/__pycache__/
+
+# Sound fx (.wav) files
+/assets/sound_fx/
