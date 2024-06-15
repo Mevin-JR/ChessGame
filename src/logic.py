@@ -79,7 +79,7 @@ def promote(piece_name: str, target_square: tuple):
     PAWN_PROMOTION_SOUND.play()
 
 def move_piece(current_piece: str, mouse_pos: tuple) -> str:
-    piece_sprite = chess_pieces_dict.get(current_piece)
+    piece_sprite: Sprite = chess_pieces_dict.get(current_piece)
     piece_rect: pygame.Rect = piece_sprite.get_rect()
 
     target_square = get_square(mouse_pos)[0]
@@ -100,12 +100,13 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
         PIECE_MOVE_SOUND.play()
         print("Moved: %s -> %s" % (current_piece, get_square(piece_rect.center)[0])) # DEBUG
     else:
-        occupied_piece = get_piece_name(target_square_center)
-        init_piece_rect: pygame.Rect = piece_rect
-        capture_piece(piece_rect, occupied_piece, target_square_center)
-        if can_promote(current_piece, init_piece_rect.center):
+        if can_promote(current_piece, piece_rect.center):
+            occupied_piece = get_piece_name(target_square_center)
+            capture_piece(piece_rect, occupied_piece, target_square_center)
             promote(current_piece, target_square_center)
             return f"Promotion: {current_piece[2]}{target_square}" # DEBUG
+        occupied_piece = get_piece_name(target_square_center)
+        capture_piece(piece_rect, occupied_piece, target_square_center)
         print("Removed: ", occupied_piece) # DEBUG
     
     return f"{current_piece[2]}{target_square}"
