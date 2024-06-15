@@ -5,14 +5,8 @@ from utils import *
 from pieces import *
 from UI import *
 
-# Sound fx's
-pygame.mixer.init()
-PIECE_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_move.wav"))
-PIECE_CAPTURE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_capture.wav"))
-ILLEGAL_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "illegal_move.wav"))
-PAWN_PROMOTION_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "pawn_promotion.wav"))
-
 queen_count = 1
+positions_dict = {}
 
 def add_queen(piece_name: str, pos: tuple) -> None:
     global queen_count
@@ -95,18 +89,30 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     if not isOccupied:
         if can_promote(current_piece, piece_rect.center):
             promote(current_piece, target_square_center)
-            return f"Promotion: {current_piece[2]}{target_square}" # DEBUG
-        piece_rect.center = target_square_center
-        PIECE_MOVE_SOUND.play()
-        print("Moved: %s -> %s" % (current_piece, get_square(piece_rect.center)[0])) # DEBUG
+        else:
+            piece_rect.center = target_square_center
+            PIECE_MOVE_SOUND.play()
+            print("Moved: %s -> %s" % (current_piece, get_square(piece_rect.center)[0])) # DEBUG
     else:
         if can_promote(current_piece, piece_rect.center):
             occupied_piece = get_piece_name(target_square_center)
             capture_piece(piece_rect, occupied_piece, target_square_center)
             promote(current_piece, target_square_center)
-            return f"Promotion: {current_piece[2]}{target_square}" # DEBUG
-        occupied_piece = get_piece_name(target_square_center)
-        capture_piece(piece_rect, occupied_piece, target_square_center)
-        print("Removed: ", occupied_piece) # DEBUG
+        else:
+            occupied_piece = get_piece_name(target_square_center)
+            capture_piece(piece_rect, occupied_piece, target_square_center)
+            print("Removed: ", occupied_piece) # DEBUG
     
+    update_positions()
     return f"{current_piece[2]}{target_square}"
+
+def update_positions():
+    global positions_dict
+    for piece, piece_obj in chess_pieces_dict.items():
+        current_pos: pygame.Rect = piece_obj.get_rect()
+        allowed_moves = get_allowed_moves(piece, current_pos.center)
+        posiitons = []
+        for value in allowed_moves.values():
+            if value is not None:
+                posiitons += value
+        positions_dict[piece] = posiitons

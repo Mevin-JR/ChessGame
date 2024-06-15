@@ -14,6 +14,13 @@ pygame.font.init()
 FONT16 = pygame.font.Font(None, 16)
 FONT32 = pygame.font.Font(None, 32)
 
+# Sound fx's
+pygame.mixer.init()
+PIECE_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_move.wav"))
+PIECE_CAPTURE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "piece_capture.wav"))
+ILLEGAL_MOVE_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "illegal_move.wav"))
+PAWN_PROMOTION_SOUND = pygame.mixer.Sound(os.path.join("assets", "sound_fx", "pawn_promotion.wav"))
+
 # Chess board constants
 BOARD_OFFSET_X, BOARD_OFFSET_Y = 50, 50
 

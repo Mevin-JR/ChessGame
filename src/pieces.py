@@ -18,9 +18,6 @@ ASCII_H = ord('h')
 RANK_MIN = 1
 RANK_MAX = 8
 
-# Global var
-king_in_check: str = None
-
 # Helper functions
 def can_capture(current_square: str, check_square: str) -> bool:
     if square_rects_dict.get(check_square) is None:
@@ -29,14 +26,6 @@ def can_capture(current_square: str, check_square: str) -> bool:
         return False
     if friendly_piece(current_square, check_square):
         return False
-    
-    # Check for king
-    global king_in_check
-    piece_name = get_piece_name(check_square)
-    if "king" in piece_name:
-        king_in_check = piece_name
-        return False
-
     return True
 
 def linear_movement(current_square: str) -> tuple[list, list]:
@@ -220,11 +209,6 @@ class Pawn(Piece):
             self.moves["moves"] = moves_list
         if self.capture_moves:
             self.moves["captures"] = self.capture_moves
-
-        # Check for king in check
-        if king_in_check is not None:
-            if king_in_check[0] == self.piece_name[0]:
-                self.moves = {} # Restrict movement if king is under attack (check)
 
         return self.moves
 
