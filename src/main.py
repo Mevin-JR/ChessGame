@@ -11,7 +11,8 @@ pygame.init()
 screenInfo = pygame.display.Info()
 
 # Constants
-WIDTH, HEIGHT = screenInfo.current_w - 200, screenInfo.current_h - 100
+#WIDTH, HEIGHT = screenInfo.current_w - 200, screenInfo.current_h - 100
+WIDTH, HEIGHT = 1000, 800 # Temp
 
 # Window customizations
 WINDOW = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
@@ -85,7 +86,7 @@ def add_graphics() -> None: # Graphics section (board and more...)
     WINDOW.blit(chess_board, (BOARD_OFFSET_X, BOARD_OFFSET_Y)) # Loading chess board
 
     piece_highlight() # Piece selection
-    display_moves() # Highlight moves and captures
+    #display_moves() # Highlight moves and captures
 
     all_pieces.update() # Update pieces on board
     all_pieces.draw(WINDOW)
@@ -96,7 +97,6 @@ def main(): # Main function/loop
     previous_turn = 0 # Black - 0, White - 1
     clicked = False
     selected = False
-    #drag = False
 
     clock = pygame.time.Clock()
     running = True
@@ -109,12 +109,6 @@ def main(): # Main function/loop
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
                 clicked = True
-                # drag = True
-                # Drag piece
-                # if square_contains_piece(mouse_pos):
-                #     piece_rect = chess_pieces_dict.get(get_piece_name(mouse_pos))
-                #     if piece_rect is not None:
-                #         piece_rect.get_rect().center = mouse_pos
                 clicked_square = get_square(mouse_pos)[0]
                 if selected and clicked_square is not None: # Piece selected and clicked in valid square
                     piece_rect: pygame.Rect = chess_pieces_dict.get(piece_name).get_rect()
@@ -142,7 +136,6 @@ def main(): # Main function/loop
                             selected = select_piece(mouse_pos)[0]
                             selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
                             allowed_moves = logic.get_allowed_moves(piece_name, mouse_pos)
-                #flip_pieces()
             if event.type == pygame.MOUSEBUTTONUP and clicked == True:
                 clicked = False
                 print("Clicked square: ", get_square(mouse_pos)[0]) # DEBUG

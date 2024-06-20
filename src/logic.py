@@ -1,5 +1,4 @@
 import pygame
-import os
 
 from utils import *
 from pieces import *
@@ -7,6 +6,7 @@ from UI import *
 
 queen_count = 1
 positions_dict = {}
+check_dict = {}
 
 def add_queen(piece_name: str, pos: tuple) -> None:
     global queen_count
@@ -105,6 +105,18 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     
     update_positions()
     return f"{current_piece[2]}{target_square}"
+
+def king_in_check():
+    for piece, moves in positions_dict.items():
+        if moves is None:
+            continue
+        for square in moves:
+            target_piece = get_piece_name(square)
+            if target_piece is None:
+                continue
+            if "king" in target_piece and piece[0] != target_piece[0]:
+
+                check_dict[target_piece] = [piece, ] # Finish this
 
 def update_positions():
     global positions_dict

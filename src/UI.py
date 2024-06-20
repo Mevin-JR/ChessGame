@@ -12,6 +12,12 @@ class Sprite(pygame.sprite.Sprite): # Sprites class
     def get_rect(self) -> pygame.Rect:
         return self.rect
 
+class Button():
+    def __init__(self, x, y, image) -> None:
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
 white_pieces_surface = {}
 black_pieces_surface = {}
 
@@ -104,3 +110,7 @@ class UI: # User Interface class
             all_pieces_group.add(piece_obj) # Add piece in group
 
         return all_pieces_group
+    
+    # def controls(self):
+    #     start_button = pygame.image.load(os.path.join("assets", "buttons", "start.png")).convert_alpha()
+    #     stop_button = pygame.image.load(os.path.join("assets", "buttons", "stop.png")).convert_alpha()
