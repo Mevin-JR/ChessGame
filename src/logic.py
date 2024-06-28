@@ -6,7 +6,6 @@ from UI import *
 
 queen_count = 1
 positions_dict = {}
-check_dict = {}
 
 def add_queen(piece_name: str, pos: tuple) -> None:
     global queen_count
@@ -35,9 +34,10 @@ def capture_piece(piece_rect: pygame.Rect, target: str, target_square: tuple) ->
     PIECE_CAPTURE_SOUND.play()
 
 def piece_can_move(piece_name: str, dest: tuple) -> bool: # Check if piece can move (based on its characteristics)
-    current_square = get_square(chess_pieces_dict.get(piece_name).rect.center)[0]
-    dest_square = get_square(dest)[0]
+    current_square = get_square_coord(chess_pieces_dict.get(piece_name).rect.center)
+    dest_square = get_square_coord(dest)
     piece_name_formatted = piece_name[2:-1]
+    can_move = False
 
     if current_square == dest_square:
         return False
@@ -50,8 +50,9 @@ def piece_can_move(piece_name: str, dest: tuple) -> bool: # Check if piece can m
     if moves:
         for move_list in moves.values():
             if dest_square in move_list:
-                return True
-    return False
+                can_move = True
+
+    return can_move
 
 def get_allowed_moves(piece_name: str, current_pos: tuple) -> dict: # Return available moves by the piece (move and captures)
     piece_name_formatted = piece_name[2:-1]
@@ -76,9 +77,9 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     piece_sprite: Sprite = chess_pieces_dict.get(current_piece)
     piece_rect: pygame.Rect = piece_sprite.get_rect()
 
-    target_square = get_square(mouse_pos)[0]
+    target_square = get_square_coord(mouse_pos)
     target_square_center = get_square_center(target_square)
-    isOccupied = square_contains_piece(mouse_pos)
+    isOccupied = is_square_occupied(mouse_pos)
     can_move = piece_can_move(current_piece, target_square_center)
 
     if not can_move:
@@ -92,7 +93,7 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
         else:
             piece_rect.center = target_square_center
             PIECE_MOVE_SOUND.play()
-            print("Moved: %s -> %s" % (current_piece, get_square(piece_rect.center)[0])) # DEBUG
+            print("Moved: %s -> %s" % (current_piece, get_square_coord(piece_rect.center))) # DEBUG
     else:
         if can_promote(current_piece, piece_rect.center):
             occupied_piece = get_piece_name(target_square_center)
@@ -106,7 +107,9 @@ def move_piece(current_piece: str, mouse_pos: tuple) -> str:
     update_positions()
     return f"{current_piece[2]}{target_square}"
 
-def king_in_check():
+def king_in_check() -> tuple[bool, dict]:
+    in_check = False
+    check_dict = {}
     for piece, moves in positions_dict.items():
         if moves is None:
             continue
@@ -115,8 +118,9 @@ def king_in_check():
             if target_piece is None:
                 continue
             if "king" in target_piece and piece[0] != target_piece[0]:
-
-                check_dict[target_piece] = [piece, ] # Finish this
+                check_dict[target_piece] = piece
+                in_check = True
+    return in_check, check_dict
 
 def update_positions():
     global positions_dict

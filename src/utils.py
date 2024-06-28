@@ -46,27 +46,28 @@ square_rects_dict, chess_pieces_dict = {}, {}
 all_pieces_group = pygame.sprite.Group()
 
 # Helper functions
-@overload
-def get_square(mouse_pos: tuple) -> tuple[str, pygame.Rect]: # get_square() Method overloading
-    ...
-
-@overload
-def get_square(square_coords: str) -> pygame.Rect:
-    ...
-
-def get_square(arg):
-    if isinstance(arg, tuple): # Check for input type
-        for square_coords, square_rect in square_rects_dict.items():
-            if square_rect.collidepoint(arg):
-                return square_coords, square_rect
-        return None, None
+def get_square_rect(arg: tuple[int, int] | str) -> pygame.Rect | None:
+    if isinstance(arg, tuple):
+        for rect in square_rects_dict.values():
+            if rect.collidepoint(arg):
+                return rect
+        return None
     elif isinstance(arg, str):
         return square_rects_dict.get(arg)
     else:
         raise ValueError("Argument must be a tuple or a string")
+    
+def get_square_coord(arg: tuple[int, int]) -> str | None:
+    if isinstance(arg, tuple):
+        for coord, rect in square_rects_dict.items():
+            if rect.collidepoint(arg):
+                return coord
+        return None
+    else:
+        raise ValueError("Argument must be a tuple or a string")
 
 @overload
-def get_piece_name(mouse_pos: tuple) -> str | None:
+def get_piece_name(pos: tuple) -> str | None:
     ...
 
 @overload
@@ -84,30 +85,51 @@ def get_piece_name(arg):
         if square_rects_dict.get(arg) is not None:
             square_center = get_square_center(arg)
             return get_piece_name(square_center)
+    else:
+        raise ValueError("Argument must be a tuple or a string")
 
 @overload
-def square_contains_piece(square_pos: tuple) -> bool:
+def is_square_occupied(pos: tuple) -> bool:
     ...
 
 @overload
-def square_contains_piece(square_coord: str) -> bool:
+def is_square_occupied(square_coord: str) -> bool:
     ...
 
-def square_contains_piece(arg): # Checks if specified square holds a piece
+def is_square_occupied(arg):
     if isinstance(arg, tuple):
-        square_rect = get_square(arg)[1]
+        square_rect = get_square_rect(arg)
         if square_rect is not None:
             for piece in chess_pieces_dict.values():
                 if piece.rect.collidepoint(square_rect.center):
                     return True
         return False
     elif isinstance(arg, str):
-        square_rect = get_square(arg)
+        square_rect = get_square_rect(arg)
         if square_rect is not None:
             for piece in chess_pieces_dict.values():
                 if piece.rect.collidepoint(square_rect.center):
                     return True
         return False
+    else:
+        raise ValueError("Argument must be a tuple or a string")
+    
+# # Correct this
+# def get_piece_square(piece_name) -> str | None:
+#     piece_obj = chess_pieces_dict.get(piece_name)
+#     if piece_obj is not None:
+#         for square, square_coord in square_rects_dict.items():
+#             if square_coord.rect.collidepoint(piece_obj.center):
+#                 return square
+#     return None
+
+# def get_piece_square_center(piece_name) -> tuple | None:
+#     piece_obj = chess_pieces_dict.get(piece_name)
+#     if piece_obj is not None:
+#         for square_coord in square_rects_dict.values():
+#             if square_coord.rect.collidepoint(piece_obj.center):
+#                 return square_coord
+#     return None
 
 def get_square_center(square: str) -> tuple:
     rect: pygame.Rect = square_rects_dict.get(square, None)
@@ -115,18 +137,12 @@ def get_square_center(square: str) -> tuple:
         return rect.center # Position values of square center
     return None
 
-def select_piece(mouse_pos: tuple) -> tuple[bool, str]:
-    for piece_name, piece in chess_pieces_dict.items():
-        if piece.rect.collidepoint(mouse_pos):
-            return True, piece_name
-    return False, None
-
 def friendly_piece(current_square: str, target_square: str) -> bool: # Check if piece is friendly
     current_piece = get_piece_name(current_square)
     target_piece = get_piece_name(target_square)
     if target_piece is None:
         return False
-    return current_piece[0] == target_piece[0] # TODO: Fix this abomination
+    return current_piece[0] == target_piece[0]
 
 def is_white(piece_name: str) -> bool: # Checks if piece is white
     return piece_name[0] == "w"

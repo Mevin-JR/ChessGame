@@ -22,7 +22,7 @@ RANK_MAX = 8
 def can_capture(current_square: str, check_square: str) -> bool:
     if square_rects_dict.get(check_square) is None:
         return False
-    if not square_contains_piece(check_square):
+    if not is_square_occupied(check_square):
         return False
     if friendly_piece(current_square, check_square):
         return False
@@ -42,7 +42,7 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
     
@@ -54,7 +54,7 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
     
@@ -66,7 +66,7 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
     
@@ -78,7 +78,7 @@ def linear_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
     
@@ -100,7 +100,7 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
 
@@ -114,7 +114,7 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
     
@@ -128,7 +128,7 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
 
@@ -142,7 +142,7 @@ def diagonal_movement(current_square: str) -> tuple[list, list]:
         if can_capture(current_square, next_coord):
             capture_list.append(next_coord)
             break
-        if square_contains_piece(next_coord):
+        if is_square_occupied(next_coord):
             break
         moves_list.append(next_coord)
     
@@ -164,7 +164,7 @@ class Pawn(Piece):
     """
 
     def get_allowed_moves(self) -> dict:
-        current_square = get_square(self.current_pos)[0]
+        current_square = get_square_coord(self.current_pos)
         file = ord(current_square[0])
         rank = int(current_square[1])
         obstructed = False
@@ -175,7 +175,7 @@ class Pawn(Piece):
         next_square_rank = rank + rank_gap1
         if RANK_MIN <= next_square_rank <= RANK_MAX:
             next_square_coord = f"{current_square[0]}{next_square_rank}"
-            if not square_contains_piece(next_square_coord):
+            if not is_square_occupied(next_square_coord):
                 moves_list.append(next_square_coord)
             else:
                 obstructed = True
@@ -187,7 +187,7 @@ class Pawn(Piece):
                 next_square_coord = f"{current_square[0]}{next_square_rank}"
                 
                 # Check for obstruction along path
-                if not obstructed and not square_contains_piece(next_square_coord):
+                if not obstructed and not is_square_occupied(next_square_coord):
                     moves_list.append(next_square_coord)
             
         # Possible captures in diagonals
@@ -225,7 +225,7 @@ class Rook(Piece):
     """
 
     def get_allowed_moves(self) -> dict:
-        current_square = get_square(self.current_pos)[0]
+        current_square = get_square_coord(self.current_pos)
         
         moves_list, self.capture_moves = linear_movement(current_square)
         
@@ -248,7 +248,7 @@ class Bishop(Piece):
     """
 
     def get_allowed_moves(self) -> dict:
-        current_square = get_square(self.current_pos)[0]
+        current_square = get_square_coord(self.current_pos)
         
         moves_list, self.capture_moves = diagonal_movement(current_square)
 
@@ -271,7 +271,7 @@ class Knight(Piece):
     """
 
     def get_allowed_moves(self) -> dict:
-        current_square = get_square(self.current_pos)[0]
+        current_square = get_square_coord(self.current_pos)
         file = ord(current_square[0])
         rank = int(current_square[1])
         moves_list = []
@@ -296,7 +296,7 @@ class Knight(Piece):
                 if can_capture(current_square, next_coord):
                     self.capture_moves.append(next_coord)
                 else:
-                    if square_contains_piece(next_coord):
+                    if is_square_occupied(next_coord):
                         continue
                     moves_list.append(next_coord)
 
@@ -320,7 +320,7 @@ class Queen(Piece):
     """
     
     def get_allowed_moves(self) -> dict:
-        current_square = get_square(self.current_pos)[0]
+        current_square = get_square_coord(self.current_pos)
 
         linear_moves, linear_captures = linear_movement(current_square)
         diagonal_moves, diagonal_captures = diagonal_movement(current_square)
@@ -347,7 +347,7 @@ class King(Piece):
     """
 
     def get_allowed_moves(self) -> dict:
-        current_square = get_square(self.current_pos)[0]
+        current_square = get_square_coord(self.current_pos)
         file = ord(current_square[0])
         rank = int(current_square[1])
         moves_list = []
@@ -372,7 +372,7 @@ class King(Piece):
                 if can_capture(current_square, next_coord):
                     self.capture_moves.append(next_coord)
                 else:
-                    if square_contains_piece(next_coord):
+                    if is_square_occupied(next_coord):
                         continue
                     moves_list.append(next_coord)
 

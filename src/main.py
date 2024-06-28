@@ -62,7 +62,7 @@ def show_allowed_moves() -> None: # Highlights allowed moves (by piece)
 def piece_highlight() -> None: # Highlight selection of piece
     if selected_piece is not None:
         piece_rect: pygame.Rect = selected_piece.get_rect()
-        square_rect = get_square(piece_rect.center)[1]
+        square_rect = get_square_rect(piece_rect.center)
 
         overlay_color = (255, 255, 0)
         overlay_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
@@ -109,16 +109,16 @@ def main(): # Main function/loop
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
                 clicked = True
-                clicked_square = get_square(mouse_pos)[0]
+                clicked_square = get_square_coord(mouse_pos)
                 if selected and clicked_square is not None: # Piece selected and clicked in valid square
                     piece_rect: pygame.Rect = chess_pieces_dict.get(piece_name).get_rect()
                     if friendly_piece(piece_rect.center, mouse_pos):
-                        piece_name = select_piece(mouse_pos)[1] # Switch selection if clicked on friendly piece
+                        piece_name = get_piece_name(mouse_pos) # Switch selection if clicked on friendly piece
                         if piece_name is not None:
-                            if (previous_turn == 0 and is_white(piece_name)) or (previous_turn == 1 and not is_white(piece_name)): # Check for turn
-                                selected = select_piece(mouse_pos)[0]
-                                selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
-                                allowed_moves = logic.get_allowed_moves(piece_name, mouse_pos)
+                            #if (previous_turn == 0 and is_white(piece_name)) or (previous_turn == 1 and not is_white(piece_name)): # Check for turn
+                            selected = True
+                            selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
+                            allowed_moves = logic.get_allowed_moves(piece_name, mouse_pos)
                     else:
                         move = logic.move_piece(piece_name, mouse_pos) # Move piece
                         if move is not None:
@@ -130,15 +130,15 @@ def main(): # Main function/loop
                         selected = False
                         selected_piece = None # Reset selection
                 elif clicked_square is not None:
-                    piece_name = select_piece(mouse_pos)[1] # Switch selection if clicked on friendly piece
+                    piece_name = get_piece_name(mouse_pos) # Switch selection if clicked on friendly piece
                     if piece_name is not None:
-                        if (previous_turn == 0 and is_white(piece_name)) or (previous_turn == 1 and not is_white(piece_name)): # Check for turn
-                            selected = select_piece(mouse_pos)[0]
-                            selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
-                            allowed_moves = logic.get_allowed_moves(piece_name, mouse_pos)
+                        #if (previous_turn == 0 and is_white(piece_name)) or (previous_turn == 1 and not is_white(piece_name)): # Check for turn
+                        selected = True
+                        selected_piece, selected_piece_name = chess_pieces_dict.get(piece_name), piece_name # Record selection
+                        allowed_moves = logic.get_allowed_moves(piece_name, mouse_pos)
             if event.type == pygame.MOUSEBUTTONUP and clicked == True:
                 clicked = False
-                print("Clicked square: ", get_square(mouse_pos)[0]) # DEBUG
+                print("Clicked square: ", get_square_coord(mouse_pos)) # DEBUG
 
         add_graphics()
 
