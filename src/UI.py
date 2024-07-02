@@ -8,7 +8,7 @@ class Sprite(pygame.sprite.Sprite): # Sprites class
         super().__init__()
         self.image = image
         self.rect = self.image.get_rect(center=pos)
-    
+
     def get_rect(self) -> pygame.Rect:
         return self.rect
 

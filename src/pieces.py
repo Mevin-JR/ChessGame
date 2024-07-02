@@ -24,7 +24,7 @@ def can_capture(current_square: str, check_square: str) -> bool:
         return False
     if not is_square_occupied(check_square):
         return False
-    if friendly_piece(current_square, check_square):
+    if is_friendly(current_square, check_square):
         return False
     return True
 

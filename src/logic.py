@@ -42,7 +42,7 @@ def piece_can_move(piece_name: str, dest: tuple) -> bool: # Check if piece can m
     if current_square == dest_square:
         return False
     
-    piece_rect: pygame.Rect = chess_pieces_dict.get(piece_name).get_rect()
+    piece_rect: pygame.Rect = chess_pieces_dict.get(piece_name).rect
     piece_obj: Piece = PIECE_CLASS_DICT.get(piece_name_formatted)
     piece: Piece = piece_obj(piece_name, piece_rect.center, dest)
 
@@ -125,7 +125,7 @@ def king_in_check() -> tuple[bool, dict]:
 def update_positions():
     global positions_dict
     for piece, piece_obj in chess_pieces_dict.items():
-        current_pos: pygame.Rect = piece_obj.get_rect()
+        current_pos: pygame.Rect = piece_obj.rect
         allowed_moves = get_allowed_moves(piece, current_pos.center)
         posiitons = []
         for value in allowed_moves.values():

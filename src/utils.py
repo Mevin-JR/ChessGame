@@ -115,13 +115,14 @@ def is_square_occupied(arg):
         raise ValueError("Argument must be a tuple or a string")
     
 # # Correct this
-# def get_piece_square(piece_name) -> str | None:
-#     piece_obj = chess_pieces_dict.get(piece_name)
-#     if piece_obj is not None:
-#         for square, square_coord in square_rects_dict.items():
-#             if square_coord.rect.collidepoint(piece_obj.center):
-#                 return square
-#     return None
+def get_piece_square(piece_name: str) -> str | None:
+    piece = chess_pieces_dict.get(piece_name)
+    if piece is not None:
+        piece_rect: pygame.Rect = piece.get_rect()
+        for square, square_coord in square_rects_dict.items():
+            if square_coord.collidepoint(piece_rect.center):
+                return square
+    return None
 
 # def get_piece_square_center(piece_name) -> tuple | None:
 #     piece_obj = chess_pieces_dict.get(piece_name)
@@ -137,7 +138,7 @@ def get_square_center(square: str) -> tuple:
         return rect.center # Position values of square center
     return None
 
-def friendly_piece(current_square: str, target_square: str) -> bool: # Check if piece is friendly
+def is_friendly(current_square: str, target_square: str) -> bool: # Check if piece is friendly
     current_piece = get_piece_name(current_square)
     target_piece = get_piece_name(target_square)
     if target_piece is None:
